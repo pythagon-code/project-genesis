@@ -1,5 +1,7 @@
 package edu.illinois.abhayp4.projectgenesis.cerebrum.workers;
 
+import jakarta.annotation.Nonnull;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,7 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class PythonExecutor {
+sealed abstract class PythonExecutor implements Closeable permits PythonClient {
     private static final String pythonExec, workerScript;
 
     static {
@@ -63,14 +65,15 @@ public class PythonExecutor {
         }
     }
 
-    private Thread thread;
+    private final Thread thread;
 
-    public PythonExecutor(int port) {
-        Thread thread = new Thread(() -> runSafeCommand(pythonExec, workerScript, Integer.toString(port)));
+    protected PythonExecutor(@Nonnull String argument) {
+        thread = new Thread(() -> runSafeCommand(pythonExec, workerScript, argument));
         thread.start();
     }
 
-    public void waitForPythonProcessEnd() {
+    @Override
+    public void close() {
         try {
             thread.join();
         }
@@ -79,7 +82,7 @@ public class PythonExecutor {
         }
     }
 
-    private static void runSafeCommand(String... command) {
+    private static void runSafeCommand(@Nonnull String... command) {
         try {
             ProcessBuilder pb = new ProcessBuilder(command).inheritIO();
             Process process = pb.start();
