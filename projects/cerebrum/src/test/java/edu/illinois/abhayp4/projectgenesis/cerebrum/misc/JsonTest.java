@@ -7,14 +7,14 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 
-import edu.illinois.abhayp4.projectgenesis.cerebrum.channels.DuplexDataChannel;
+import edu.illinois.abhayp4.projectgenesis.cerebrum.channels.MessageChannel;
 
 public class JsonTest {
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class MyClass1 {
         private final int i, j, k;
         public final int l;
-        public DuplexDataChannel channel;
+        public MessageChannel channel;
 
         @JsonCreator
         public MyClass1(
@@ -44,13 +44,13 @@ public class JsonTest {
     public void testJackson1() throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         MyClass1 obj = new MyClass1(1, 2, 3);
-        obj.channel = new DuplexDataChannel(10);
+        obj.channel = new MessageChannel();
         String json = objectMapper.writeValueAsString(obj);
         MyClass1 obj2 = objectMapper.readValue(json, MyClass1.class);
         assertNotEquals(obj, obj2);
         obj.channel = null;
         assertEquals(obj, obj2);
-        assertEquals(obj2.l, 4);
+        assertEquals(4, obj.l);
 
         System.out.println("testJackson1(): ");
         System.out.println(json);
@@ -92,16 +92,6 @@ public class JsonTest {
         ) {
             super(i, 0);
         }
-
-        @Override
-        public boolean equals(Object other) {
-            if (!(other instanceof MyClass2)) {
-                return false;
-            }
-
-            MyClass2 obj = (MyClass2) other;
-            return (i == obj.i);
-        }
     }
     
     @Test
@@ -133,6 +123,16 @@ public class JsonTest {
         System.out.println("testJacksonRecordClass1(): ");
         System.out.println(json);
         System.out.println(obj);
+        System.out.println();
+    }
+
+    @Test
+    public void testJacksonReadPrimitives1() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        int i = objectMapper.readValue("10", int.class);
+        assertEquals(10, i);
+        System.out.println("testJacksonReadPrimitives1(): ");
+        System.out.println(i);
         System.out.println();
     }
 }

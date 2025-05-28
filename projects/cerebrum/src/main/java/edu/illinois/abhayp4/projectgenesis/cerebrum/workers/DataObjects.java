@@ -1,0 +1,17 @@
+package edu.illinois.abhayp4.projectgenesis.cerebrum.workers;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public final class DataObjects {
+    private DataObjects() {}
+
+    public record ModelInput(
+        @JsonProperty("Operation") String operation,
+        @JsonProperty("Data") Object data
+    ) { }
+
+    public record ModelOutput(
+        @JsonProperty("Message") String message,
+        @JsonProperty("LatentVector") double[] latentVector
+    ) { }
+}

@@ -2,7 +2,6 @@ package edu.illinois.abhayp4.projectgenesis.cerebrum.application;
 
 import edu.illinois.abhayp4.projectgenesis.cerebrum.brain.BrainSimulator;
 import edu.illinois.abhayp4.projectgenesis.cerebrum.brain.SimulatorSettings;
-import edu.illinois.abhayp4.projectgenesis.cerebrum.workers.PythonExecutor;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -18,13 +17,11 @@ public class CerebrumApp extends Application implements Closeable {
         Properties properties = new Properties();
         SimulatorSettings settings;
 
-        new PythonExecutor(0);
-
         try (InputStream stream = getClass().getResourceAsStream("/default.properties")) {
             if (stream == null)
                 throw new IOException();
             properties.load(stream);
-            settings = SimulatorSettings.loadFromProperties(properties);
+            settings = SimulatorSettings.loadFromConfig(properties.getProperty("default.config"));
         } catch (IOException e) {
             throw new IOError(e);
         }

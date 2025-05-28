@@ -41,7 +41,7 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
             System.out.println("Python temporary directory: " + tempDir);
 
             if (!Files.isDirectory(Paths.get("output", ".venv"))) {
-                runSafeCommand("python3", "-m", "venv", "output/.venv");
+                runSafeCommandAndWait("python3", "-m", "venv", "output/.venv");
             }
 
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
@@ -51,12 +51,12 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
             }
 
             if (!Files.exists(Paths.get("output", ".venv", "initialized.toml"))) {
-                runSafeCommand(pythonExec, "-m", "pip", "install", "--upgrade", "pip");
-                runSafeCommand(pythonExec, "-m", "pip", "install", "-r", requirements);
-                try (PrintWriter pw = new PrintWriter(new File("output/.venv/initialized.toml"))) {
+                runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "--upgrade", "pip");
+                runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "-r", requirements);
+                try (PrintWriter pw = new PrintWriter("output/.venv/initialized.toml")) {
                     pw.println("[initialized]");
-                    pw.printf("project = \"%s\"%n", "cerebrum");
-                    pw.printf("time = \"%s\"%n", ZonedDateTime.now());
+                    pw.println("project = \"cerebrum\"");
+                    pw.println("time = \"" + ZonedDateTime.now() + "\"");
                 }
             }
 
@@ -65,34 +65,50 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
         }
     }
 
-    private final Thread thread;
+    private Process process = null;
 
-    protected PythonExecutor(@Nonnull String argument) {
-        thread = new Thread(() -> runSafeCommand(pythonExec, workerScript, argument));
-        thread.start();
+    protected final void startProcess(@Nonnull String... command) {
+        if (process != null) {
+          throw new RuntimeException("Process already started");
+        }
+
+        process = runSafeCommand(command);
     }
 
     @Override
     public void close() {
+        if (process == null) {
+            throw new RuntimeException("Process never started");
+        }
+
         try {
-            thread.join();
+            process.waitFor();
         }
         catch (InterruptedException e) {
             throw new RuntimeException("Cannot interrupt during Python process end");
         }
     }
 
-    private static void runSafeCommand(@Nonnull String... command) {
+    private static void runSafeCommandAndWait(@Nonnull String... command) {
         try {
-            ProcessBuilder pb = new ProcessBuilder(command).inheritIO();
-            Process process = pb.start();
+            Process process = runSafeCommand(command);
             process.waitFor();
             if (process.exitValue() != 0) {
                 throw new RuntimeException("Command " + Arrays.asList(command) + " failed");
             }
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Cannot interrupt during Python process startProcess");
+        }
+    }
+
+    private static @Nonnull Process runSafeCommand(@Nonnull String... command) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(command).inheritIO();
+            return pb.start();
+        } catch (IOException e) {
             System.err.println(e.getMessage());
             System.exit(1);
+            return null;
         }
     }
 }
