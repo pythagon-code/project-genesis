@@ -8,10 +8,12 @@ public final class DataObjects {
     public record ModelInput(
         @JsonProperty("Operation") String operation,
         @JsonProperty("Data") Object data
-    ) { }
+    ) {}
 
-    public record ModelOutput(
+    public record ModelTransmissionOutput(
         @JsonProperty("Message") String message,
-        @JsonProperty("LatentVector") double[] latentVector
-    ) { }
+        @JsonProperty("LatentVector") double[] latentVector,
+        @JsonProperty("TransmissionScores") double[] transmissionScores,
+        @JsonProperty("TransmissionDelays") double[] transmissionDelays
+    ) {}
 }

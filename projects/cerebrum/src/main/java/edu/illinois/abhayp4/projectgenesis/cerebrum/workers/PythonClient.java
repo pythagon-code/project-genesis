@@ -34,7 +34,7 @@ sealed class PythonClient extends PythonExecutor implements Closeable permits Mo
         }
     }
 
-    public synchronized <R> R sendAndReceiveObject(@Nonnull Object data, @Nonnull Class<R> clazz) {
+    public <R> R sendAndReceiveObject(@Nonnull Object data, @Nonnull Class<R> clazz) {
         sendObject(data);
         return receiveObject(clazz);
     }
@@ -57,7 +57,7 @@ sealed class PythonClient extends PythonExecutor implements Closeable permits Mo
         }
     }
 
-    private synchronized void send(@Nonnull String message) {
+    private void send(@Nonnull String message) {
         serverOut.println(message);
     }
 
