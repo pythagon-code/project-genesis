@@ -110,6 +110,10 @@ public final class BrainSimulator {
         return relayNeuronList.size();
     }
 
+    public int getNeuronCount() {
+        return relayNeuronList.size();
+    }
+
     public void start(CerebrumAppContext feedback) {
 
     }

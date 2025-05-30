@@ -27,10 +27,9 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
     private final List<TargetMessageChannel> targets;
     private BrainSimulator brain = null;
     private final Thread thread;
-    private final ModelWorker modelWorker;
+    protected final ModelWorker modelWorker;
     private int neuronId = -1;
-    private volatile boolean awaken = false;
-    private boolean done = false;
+    private volatile boolean awaken = false, done = false;
 
     public RelayNeuron() {
         source = new MessageChannel();
@@ -93,7 +92,7 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         done = true;
         try {
             thread.join();

@@ -18,7 +18,7 @@ sealed class MetaNeuron extends RelayNeuron permits ResponseNeuron {
     }
 
     @Override
-    protected void onMessageReceived(TransmissionMessage message) {
+    protected void onMessageReceived(@Nonnull TransmissionMessage message) {
         // TODO Auto-generated method stub
         
     }

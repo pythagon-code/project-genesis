@@ -1,8 +1,3 @@
-/**
- * ModelWorkerPool.java
- * @author Abhay Pokhriyal
- */
-
 package edu.illinois.abhayp4.projectgenesis.cerebrum.workers;
 
 import java.io.Closeable;
@@ -15,49 +10,46 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 
 public final class ModelWorkerPool implements Closeable {
-    private int maxThreadsPerClient;
-    private Map<ModelWorker, Integer> clientUsage;
-    private List<ModelWorker> availableClients;
-    private Random random;
+    private final int maxNeuronsPerWorker;
+    private final Map<ModelWorker, Integer> workerUsage;
+    private final List<ModelWorker> availableWorkers;
+    private final Random random;
 
-    public ModelWorkerPool() {
-        maxThreadsPerClient = Math.ceilDiv(0, 0);
-        clientUsage = new HashMap<>();
+    public ModelWorkerPool(int neuronCount, int workerCount, int randomSeed) {
+        maxNeuronsPerWorker = Math.ceilDiv(neuronCount, workerCount);
+        workerUsage = new HashMap<>();
 
-        for (int i = 0; i < getNPythonWorkers(); i++) {
-            clientUsage.put(new ModelWorker(), 0);
+        for (int i = 0; i < workerCount; i++) {
+            workerUsage.put(new ModelWorker(), 0);
         }
 
-        availableClients = new ArrayList<>(clientUsage.keySet());
-        random = new Random();
+        availableWorkers = new ArrayList<>(workerUsage.keySet());
+        random = new Random(randomSeed);
     }
 
-    private int getNPythonWorkers() {
-        return Math.max(0, 0);
-    }
-
-    public synchronized ModelWorker getAvailableClient() {
-        if (availableClients.isEmpty()) {
+    @SuppressWarnings("resource")
+    public ModelWorker getAvailableWorker() {
+        if (availableWorkers.isEmpty()) {
             throw new NoSuchElementException();
         }
 
-        int clientIdx = random.nextInt(availableClients.size());
-        ModelWorker client = availableClients.get(clientIdx);
-        
-        int usage = clientUsage.get(client) + 1;
-        clientUsage.put(client, usage);
+        int workerIdx = random.nextInt(availableWorkers.size());
+        ModelWorker worker = availableWorkers.get(workerIdx);
 
-        if (usage == maxThreadsPerClient) {
-            availableClients.remove(clientIdx);
+        int usage = workerUsage.get(worker) + 1;
+        workerUsage.put(worker, usage);
+
+        if (usage == maxNeuronsPerWorker) {
+            availableWorkers.remove(workerIdx);
         }
 
-        return client;
+        return worker;
     }
 
     @Override
     public void close() {
-        for (ModelWorker client : clientUsage.keySet()) {
-            client.close();
+        for (ModelWorker worker : workerUsage.keySet()) {
+            worker.close();
         }
     }
 }

@@ -28,8 +28,9 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                                 Objects.requireNonNull(
                                     PythonExecutor.class.getResourceAsStream("/" + resource))))
                     ) {
-                        while (reader.ready()) {
-                            writer.println(reader.readLine());
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            writer.println(line);
                         }
                     }
                 }
@@ -41,13 +42,13 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
             System.out.println("Python temporary directory: " + tempDir);
 
             if (!Files.isDirectory(Paths.get("output", ".venv"))) {
-                runSafeCommandAndWait("python3", "-m", "venv", "output/.venv");
+                runSafeCommandAndWait("python", "-m", "venv", "output/.venv");
             }
 
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                pythonExec = Paths.get("output", ".venv", "Scripts", "python3.exe").toString();
+                pythonExec = Paths.get("output", ".venv", "Scripts", "python.exe").toString();
             } else {
-                pythonExec = Paths.get("output", ".venv", "bin", "python3").toString();
+                pythonExec = Paths.get("output", ".venv", "bin", "python").toString();
             }
 
             if (!Files.exists(Paths.get("output", ".venv", "initialized.toml"))) {
