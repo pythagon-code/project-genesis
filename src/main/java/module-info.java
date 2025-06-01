@@ -1,5 +1,5 @@
-module edu.illinois.abhayp4.projectgenesis {
-    requires edu.illinois.abhayp4.projectgenesis.cerebrum;
+module edu.illinois.web.abhaypokh.projectgenesis {
+    requires edu.illinois.web.abhaypokh.projectgenesis.cerebrum;
 
-    exports edu.illinois.abhayp4.projectgenesis.application;
+    exports edu.illinois.web.abhaypokh.projectgenesis.application;
 }

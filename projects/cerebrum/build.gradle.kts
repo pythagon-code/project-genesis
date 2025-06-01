@@ -4,7 +4,7 @@ plugins {
     id("org.beryx.jlink") version "3.1.1"
 }
 
-group = "edu.illinois.abhayp4.projectgenesis.cerebrum"
+group = "edu.illinois.web.abhaypokh.projectgenesis.cerebrum"
 version = "1.0-SNAPSHOT"
 
 dependencies {
@@ -24,8 +24,8 @@ sourceSets {
 }
 
 application {
-    mainModule.set("edu.illinois.abhayp4.projectgenesis.cerebrum")
-    mainClass.set("edu.illinois.abhayp4.projectgenesis.cerebrum.api.CerebrumApi")
+    mainModule.set("edu.illinois.web.abhaypokh.projectgenesis.cerebrum")
+    mainClass.set("edu.illinois.web.abhaypokh.projectgenesis.cerebrum.api.CerebrumApi")
 }
 
 javafx {
@@ -37,7 +37,7 @@ jlink {
     options.set(listOf("--no-header-files", "--no-man-pages"))
 
     launcher {
-        name = "project-genesis-cerebrum"
+        name = "cerebrum_launcher"
     }
 
     addExtraDependencies("javafx")

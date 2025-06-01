@@ -4,7 +4,7 @@ plugins {
     id("org.beryx.jlink") version "3.1.1"
 }
 
-group = "edu.illinois.abhayp4.projectgenesis"
+group = "edu.illinois.web.abhaypokh.projectgenesis"
 version = "1.0-SNAPSHOT"
 
 allprojects {
@@ -85,15 +85,15 @@ dependencies {
 }
 
 application {
-    mainModule.set("edu.illinois.abhayp4.projectgenesis")
-    mainClass.set("edu.illinois.abhayp4.projectgenesis.application.Main")
+    mainModule.set("edu.illinois.web.abhaypokh.projectgenesis")
+    mainClass.set("edu.illinois.web.abhaypokh.projectgenesis.application.Main")
 }
 
 jlink {
     options.set(listOf("--no-header-files", "--no-man-pages"))
 
     launcher {
-        name = "project-genesis"
+        name = "project_genesis_launcher"
     }
 
     addExtraDependencies("javafx")

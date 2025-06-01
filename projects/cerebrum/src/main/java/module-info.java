@@ -1,4 +1,4 @@
-module edu.illinois.abhayp4.projectgenesis.cerebrum {
+module edu.illinois.web.abhaypokh.projectgenesis.cerebrum {
     requires com.fasterxml.jackson.databind;
     requires jakarta.annotation;
     requires java.logging;
@@ -7,6 +7,6 @@ module edu.illinois.abhayp4.projectgenesis.cerebrum {
     requires javafx.graphics;
     requires org.yaml.snakeyaml;
 
-    exports edu.illinois.abhayp4.projectgenesis.cerebrum.api;
-    opens edu.illinois.abhayp4.projectgenesis.cerebrum.application to javafx.fxml, javafx.graphics;
+    exports edu.illinois.web.abhaypokh.projectgenesis.cerebrum.api;
+    opens edu.illinois.web.abhaypokh.projectgenesis.cerebrum.application to javafx.fxml, javafx.graphics;
 }
