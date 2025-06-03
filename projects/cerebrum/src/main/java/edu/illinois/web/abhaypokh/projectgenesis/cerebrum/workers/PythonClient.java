@@ -8,7 +8,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-sealed class PythonClient extends PythonExecutor implements Closeable permits ModelWorker {
+sealed abstract class PythonClient extends PythonExecutor implements Closeable permits ModelWorker {
     private final Socket socket;
     private final BufferedReader serverIn;
     private final PrintWriter serverOut;
@@ -34,7 +34,7 @@ sealed class PythonClient extends PythonExecutor implements Closeable permits Mo
         }
     }
 
-    public <R> R sendAndReceiveObject(@Nonnull Object data, @Nonnull Class<R> clazz) {
+    protected final <R> @Nonnull R sendAndReceiveObject(@Nonnull Object data, @Nonnull Class<R> clazz) {
         sendObject(data);
         return receiveObject(clazz);
     }
@@ -48,7 +48,7 @@ sealed class PythonClient extends PythonExecutor implements Closeable permits Mo
         send(data.toString());
     }
 
-    private @Nonnull <R> R receiveObject(@Nonnull Class<R> clazz) {
+    private <R> @Nonnull R receiveObject(@Nonnull Class<R> clazz) {
         try {
             return mapper.readValue(receive(), clazz);
         }

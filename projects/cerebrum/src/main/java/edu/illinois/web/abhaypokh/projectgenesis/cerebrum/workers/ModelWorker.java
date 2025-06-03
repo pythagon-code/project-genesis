@@ -3,6 +3,8 @@ package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.workers;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.SimulatorConfig;
 
 public final class ModelWorker extends PythonClient {
+    ModelWorker() {}
+
     public synchronized boolean initializeClient(SimulatorConfig config) {
         return sendAndReceiveObject(new DataObjects.ModelInput("InitializeClient", config), boolean.class);
     }

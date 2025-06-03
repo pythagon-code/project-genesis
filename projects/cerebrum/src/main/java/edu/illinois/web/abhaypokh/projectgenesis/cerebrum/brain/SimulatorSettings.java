@@ -15,13 +15,13 @@ public record SimulatorSettings(
     @Nonnull Map<String, Object> graphStructuresObject,
     @Nonnull Map<String, Object> optimizationObject
 ) {
-    public static @Nonnull SimulatorSettings loadFromConfig(String config) throws IOException {
+    public static @Nonnull SimulatorSettings loadFromConfig(@Nonnull String config) throws IOException {
         try (
             InputStream systemStream = getConfigStream(config, "system.yml");
             InputStream modelArchitectureStream = getConfigStream(config, "model_architecture.yml");
             InputStream transformersStream = getConfigStream(config, "transformers.yml");
             InputStream neuronTopologyStream = getConfigStream(config, "neuron_topology.yml");
-            InputStream baseNeuronStream = getConfigStream(config, "base_neuron.yml");
+            InputStream baseNeuronStream = getConfigStream(config, "primitive_neuron.yml");
             InputStream graphStructuresStream = getConfigStream(config, "graph_structures.yml");
             InputStream optimizationStream = getConfigStream(config, "optimization.yml");
         ) {
@@ -39,7 +39,7 @@ public record SimulatorSettings(
     }
 
     private static InputStream getConfigStream(String config, String resourceName) {
-        return SimulatorSettings.class.getResourceAsStream("/" + config + "/" + resourceName);
+        return SimulatorSettings.class.getResourceAsStream("/configs/" + config + "/" + resourceName);
     }
 
     private SimulatorSettings(

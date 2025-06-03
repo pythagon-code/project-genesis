@@ -2,7 +2,6 @@ package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.application;
 
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.BrainSimulator;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.SimulatorSettings;
-import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.workers.ModelWorker;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -15,8 +14,6 @@ public class CerebrumApp extends Application implements Closeable {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        new ModelWorker();
-
         Properties properties = new Properties();
         SimulatorSettings settings;
 

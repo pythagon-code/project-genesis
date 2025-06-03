@@ -57,6 +57,7 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "--upgrade", "pip");
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "-r", requirements);
                 try (PrintWriter pw = new PrintWriter("output/.venv/initialized.toml")) {
+                    pw.println("# Created after all Python requirements have been installed");
                     pw.println("[initialized]");
                     pw.println("project = \"cerebrum\"");
                     pw.println("time = \"" + ZonedDateTime.now() + "\"");

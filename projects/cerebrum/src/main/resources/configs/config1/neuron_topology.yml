@@ -1,7 +1,6 @@
 neuron_topology:
-    n_levels: 3
-    n_response_nodes: 4
+    num_levels: 3
     levels:
         - crossed-box
-        - {3: "triangle", 4: "crossed-box"}
-        - {3: "triangle", 4: "crossed-box"}
+        - crossed-box
+        - crossed-box
