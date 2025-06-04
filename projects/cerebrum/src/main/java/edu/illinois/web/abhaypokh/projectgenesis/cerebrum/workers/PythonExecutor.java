@@ -53,12 +53,12 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                 pythonExec = Paths.get("output", ".venv", "bin", "python").toString();
             }
 
-            if (!Files.exists(Paths.get("output", ".venv", "initialized.toml"))) {
+            if (!Files.exists(Paths.get("output", ".venv", "init.toml"))) {
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "--upgrade", "pip");
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "-r", requirements);
-                try (PrintWriter pw = new PrintWriter("output/.venv/initialized.toml")) {
+                try (PrintWriter pw = new PrintWriter("output/.venv/init.toml")) {
                     pw.println("# Created after all Python requirements have been installed");
-                    pw.println("[initialized]");
+                    pw.println("[init]");
                     pw.println("project = \"cerebrum\"");
                     pw.println("time = \"" + ZonedDateTime.now() + "\"");
                 }

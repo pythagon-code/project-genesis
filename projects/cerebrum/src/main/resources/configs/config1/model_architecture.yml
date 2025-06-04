@@ -1,18 +1,32 @@
 model_architecture:
     random_seed: 1
+
     neuron_activity:
         goal: 0.2
         force: 10
+
     transmission_delay:
         min: 5
         max: 20
+
     short_term_memory:
-        capacity: 200
+        capacity: 32
         appendage:
             frequency: 40
-            max_size: 5
+            latent_vector_size: 64
+
     long_term_memory:
-        capacity: 200
+        capacity: 64
         appendage:
-            frequency: 200
-            max_size: 5
+            frequency: 64
+            latent_vector_size: 64
+
+    levels:
+        -   graph: crossed-box
+            latent_vector_size: 1024
+
+        -   graph: crossed-box
+            latent_vector_size: 512
+
+        -   graph: crossed-box
+            latent_vector_size: 256

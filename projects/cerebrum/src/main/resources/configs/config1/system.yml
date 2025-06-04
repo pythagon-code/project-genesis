@@ -1,4 +1,4 @@
 system:
-    n_python_workers: 4
+    num_python_workers: 4
     preload_from: ~
-    checkpoint_frequency: 10
+    checkpoint_frequency: 240

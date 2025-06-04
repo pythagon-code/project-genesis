@@ -19,7 +19,7 @@ public record SimulatorSettings(
         try (
             InputStream systemStream = getConfigStream(config, "system.yml");
             InputStream modelArchitectureStream = getConfigStream(config, "model_architecture.yml");
-            InputStream transformersStream = getConfigStream(config, "transformers.yml");
+            InputStream transformersStream = getConfigStream(config, "transformer.yml");
             InputStream neuronTopologyStream = getConfigStream(config, "neuron_topology.yml");
             InputStream baseNeuronStream = getConfigStream(config, "primitive_neuron.yml");
             InputStream graphStructuresStream = getConfigStream(config, "graph_structures.yml");

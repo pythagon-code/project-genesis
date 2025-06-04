@@ -1,6 +1,0 @@
-neuron_topology:
-    num_levels: 3
-    levels:
-        - crossed-box
-        - crossed-box
-        - crossed-box
