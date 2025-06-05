@@ -21,7 +21,7 @@
     </Appenders>
 
     <Loggers>
-        <Root level="debug">
+        <Root level="DEBUG">
             <AppenderRef ref="STDOUT"/>
             <AppenderRef ref="ASYNC_ROLLING"/>
         </Root>
