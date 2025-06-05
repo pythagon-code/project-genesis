@@ -4,6 +4,8 @@ import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.BrainSimulator;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.SimulatorSettings;
 import javafx.application.Application;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.Properties;
@@ -14,6 +16,9 @@ public class CerebrumApp extends Application implements Closeable {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
+        Logger logger = LogManager.getLogger(getClass());
+        logger.info("Hello World!");
+
         Properties properties = new Properties();
         SimulatorSettings settings;
 

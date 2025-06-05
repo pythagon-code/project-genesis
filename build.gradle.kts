@@ -26,8 +26,9 @@ allprojects {
         testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
         implementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
-        implementation("org.slf4j:slf4j-api:2.0.12")
-        implementation("ch.qos.logback:logback-classic:1.4.14")
+        implementation(platform("org.apache.logging.log4j:log4j-bom:2.12.4"))
+        implementation("org.apache.logging.log4j:log4j-api")
+        implementation("org.apache.logging.log4j:log4j-core")
     }
 
     tasks.withType<Test>().configureEach {

@@ -18,11 +18,11 @@ public record SimulatorSettings(
     public static @Nonnull SimulatorSettings loadFromConfig(@Nonnull String config) throws IOException {
         try (
             InputStream systemStream = getConfigStream(config, "system.yml");
-            InputStream modelArchitectureStream = getConfigStream(config, "model_architecture.yml");
-            InputStream transformersStream = getConfigStream(config, "transformer.yml");
+            InputStream modelArchitectureStream = getConfigStream(config, "model.yml");
+            InputStream transformersStream = getConfigStream(config, "architecture.yml");
             InputStream neuronTopologyStream = getConfigStream(config, "neuron_topology.yml");
             InputStream baseNeuronStream = getConfigStream(config, "primitive_neuron.yml");
-            InputStream graphStructuresStream = getConfigStream(config, "graph_structures.yml");
+            InputStream graphStructuresStream = getConfigStream(config, "graphs.yml");
             InputStream optimizationStream = getConfigStream(config, "optimization.yml");
         ) {
             return new SimulatorSettings(

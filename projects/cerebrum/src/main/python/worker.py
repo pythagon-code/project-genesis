@@ -1,15 +1,13 @@
 from sys import argv
-from socket import socket, AF_INET, SOCK_STREAM, error
+from socket import socket, AF_INET, SOCK_STREAM, error as socket_error
 import json
-
-import transformers
 
 
 def get_message(client: socket, buffer: bytearray) -> dict | None:
     while b"\n" not in buffer:
         try:
             chunk = client.recv(bufsize=1024)
-        except error as e:
+        except socket_error as e:
             return {"Operation": "Shutdown"}
         if len(chunk) == 0:
             return {"Operation": "Shutdown"}

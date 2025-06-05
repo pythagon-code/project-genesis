@@ -1,4 +1,4 @@
-model_architecture:
+model:
     random_seed: 1
 
     neuron_activity:
@@ -13,20 +13,23 @@ model_architecture:
         capacity: 32
         appendage:
             frequency: 40
-            latent_vector_size: 64
+            latent_dim: 64
 
     long_term_memory:
         capacity: 64
         appendage:
-            frequency: 64
-            latent_vector_size: 64
+            frequency: 100
+            latent_dim: 64
 
     levels:
         -   graph: crossed-box
-            latent_vector_size: 1024
+            latent_dim: 1024
+            buffer_size: 4
 
         -   graph: crossed-box
-            latent_vector_size: 512
+            latent_dim: 512
+            buffer_size: 4
 
         -   graph: crossed-box
-            latent_vector_size: 256
+            latent_dim: 256
+            buffer_size: 4

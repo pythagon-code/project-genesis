@@ -5,7 +5,7 @@ module edu.illinois.web.abhaypokh.projectgenesis.cerebrum {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
-    requires org.slf4j;
+    requires org.apache.logging.log4j;
     requires org.yaml.snakeyaml;
 
     exports edu.illinois.web.abhaypokh.projectgenesis.cerebrum.api;

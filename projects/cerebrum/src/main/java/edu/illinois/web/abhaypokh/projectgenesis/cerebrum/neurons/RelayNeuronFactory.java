@@ -38,6 +38,7 @@ public class RelayNeuronFactory implements Closeable {
     public void close() {
         for (RelayNeuron neuron : neuronList) {
             neuron.close();
+
         }
     }
 }
