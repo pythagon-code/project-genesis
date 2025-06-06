@@ -17,7 +17,13 @@ public class CerebrumApp extends Application implements Closeable {
     @Override
     public void start(Stage primaryStage) throws IOException {
         Logger logger = LogManager.getLogger(getClass());
-        logger.info("Hello World!");
+        for (int i = 0; i < 100; i++) {
+            logger.info("Hello World!");
+            logger.debug("Hello World!");
+            logger.warn("Hello World!");
+        }
+
+        System.out.println(System.getProperty("user.dir"));
 
         Properties properties = new Properties();
         SimulatorSettings settings;

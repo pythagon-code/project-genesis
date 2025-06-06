@@ -16,6 +16,8 @@ Thumbs.db
 
 # Use this directory for local testing
 /dev/
+/modules/*/dev/
 
 # Program output and logs
-/output/
+/gen/
+/modules/*/gen/

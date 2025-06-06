@@ -6,9 +6,9 @@
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %5level: %msg%n"/>
         </Console>
 
-        <RollingFile name="ROLLING" fileName="output/logs/cerebrum.log"
-                     filePattern="output/logs/cerebrum.%d{yyyy-MM-dd}.log">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %5level: %msg%n"/>
+        <RollingFile name="ROLLING" fileName="gen/logs/cerebrum.log"
+                     filePattern="gen/logs/cerebrum.%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %5level:  %msg%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>

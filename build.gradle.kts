@@ -70,20 +70,29 @@ allprojects {
         mainModule.set(application.mainModule.get())
         mainClass.set(application.mainClass.get())
 
-        val libs = layout.buildDirectory.dir("libs/").get().asFile
-        val deps = layout.buildDirectory.dir("deps/").get().asFile
+        classpath = files()
 
-        classpath = files(libs, deps)
+        val libs = layout.buildDirectory.dir("libs/").get().asFile.toPath()
+        val deps = layout.buildDirectory.dir("deps/").get().asFile.toPath()
 
-        jvmArgs = listOf(
+        val args = arrayListOf(
             "--module-path", "$libs${File.pathSeparator}$deps",
-            "-m", "${application.mainModule.get()}/${application.mainClass.get()}"
         )
+
+        if (project.properties["mode"] == "debug") {
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:9000")
+        }
+
+        jvmArgs = args
     }
 }
 
 dependencies {
     implementation(project(":cerebrum"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.18.0"))
+    implementation("com.fasterxml.jackson.core:jackson-core")
+    implementation("com.fasterxml.jackson.core:jackson-annotations")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation(project(":new-eden"))
 }
 
@@ -93,10 +102,14 @@ application {
 }
 
 jlink {
-    options.set(listOf("--no-header-files", "--no-man-pages"))
+    options.set(listOf("--strip-debug", "--no-header-files", "--no-man-pages"))
 
     launcher {
         name = "project_genesis_launcher"
+    }
+
+    mergedModule {
+        enabled = false
     }
 
     addExtraDependencies("javafx")
