@@ -10,6 +10,7 @@ version = "1.0-SNAPSHOT"
 allprojects {
     apply(plugin = "java")
     apply(plugin = "application")
+    apply(plugin = "org.beryx.jlink")
 
     java {
         toolchain {
@@ -54,6 +55,8 @@ allprojects {
     }
 
     tasks.register<Copy>("copyDeps") {
+        dependsOn(tasks.withType<Jar>())
+
         from(configurations.runtimeClasspath)
         into(layout.buildDirectory.dir("deps/"))
     }
@@ -72,8 +75,8 @@ allprojects {
 
         classpath = files()
 
-        val libs = layout.buildDirectory.dir("libs/").get().asFile.toPath()
-        val deps = layout.buildDirectory.dir("deps/").get().asFile.toPath()
+        val libs = layout.buildDirectory.dir("libs/").get().asFile.absolutePath
+        val deps = layout.buildDirectory.dir("deps/").get().asFile.absolutePath
 
         val args = arrayListOf(
             "--module-path", "$libs${File.pathSeparator}$deps",
@@ -85,32 +88,24 @@ allprojects {
 
         jvmArgs = args
     }
+
+    jlink {
+        options.set(listOf("--strip-debug", "--no-header-files", "--no-man-pages"))
+
+        launcher {
+            name = "app_launcher"
+        }
+
+        mergedModule {}
+    }
 }
 
 dependencies {
     implementation(project(":cerebrum"))
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.18.0"))
-    implementation("com.fasterxml.jackson.core:jackson-core")
-    implementation("com.fasterxml.jackson.core:jackson-annotations")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation(project(":new-eden"))
 }
 
 application {
     mainModule.set("edu.illinois.web.abhaypokh.projectgenesis")
     mainClass.set("edu.illinois.web.abhaypokh.projectgenesis.application.Main")
-}
-
-jlink {
-    options.set(listOf("--strip-debug", "--no-header-files", "--no-man-pages"))
-
-    launcher {
-        name = "project_genesis_launcher"
-    }
-
-    mergedModule {
-        enabled = false
-    }
-
-    addExtraDependencies("javafx")
 }
