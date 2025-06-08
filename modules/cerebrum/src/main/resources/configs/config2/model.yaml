@@ -1,0 +1,35 @@
+model:
+    random_seed: 1
+
+    neuron_activity:
+        goal: 0.2
+        force: 10
+
+    transmission_delay:
+        min: 5
+        max: 20
+
+    short_term_memory:
+        capacity: 32
+        appendage:
+            frequency: 40
+            latent_dim: 64
+
+    long_term_memory:
+        capacity: 64
+        appendage:
+            frequency: 100
+            latent_dim: 64
+
+    levels:
+        -   graph: crossed-box
+            latent_dim: 1024
+            buffer_size: 4
+
+        -   graph: crossed-box
+            latent_dim: 512
+            buffer_size: 4
+
+        -   graph: crossed-box
+            latent_dim: 256
+            buffer_size: 4

@@ -1,8 +1,0 @@
-optimization:
-    train_frequency: 1  # Frequency of training (# of responses)
-    type: Adam  # Type of optimization algorithm (Adam/SGD/RMSProp/AdamW)
-    learning_rate: 0.001  # Learning rate for training
-    alpha: ~  # Alpha parameter for training (0-1, "~" for default value, 0.9)
-    beta: ~  # Beta parameter for training (0-1, "~" for default value, 0.999)
-    batch_size: 32  # Batch size for training
-    replay_memory: 1024  # Size of the replay memory (# of samples)

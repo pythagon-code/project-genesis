@@ -46,23 +46,13 @@ allprojects {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
-    tasks.withType<Jar> {
-        doLast {
-            manifest {
-                attributes["Main-Class"] = application.mainClass.get()
-            }
-        }
-    }
-
     tasks.register<Copy>("copyDeps") {
-        dependsOn(tasks.withType<Jar>())
-
         from(configurations.runtimeClasspath)
         into(layout.buildDirectory.dir("deps/"))
     }
 
     tasks.register<JavaExec>("runModularJar") {
-        dependsOn(tasks.getByName("build"), tasks.getByName("copyDeps"))
+        dependsOn(tasks.build, tasks.getByName("copyDeps"))
 
         javaLauncher.set(
             javaToolchains.launcherFor {
@@ -78,9 +68,7 @@ allprojects {
         val libs = layout.buildDirectory.dir("libs/").get().asFile.absolutePath
         val deps = layout.buildDirectory.dir("deps/").get().asFile.absolutePath
 
-        val args = arrayListOf(
-            "--module-path", "$libs${File.pathSeparator}$deps",
-        )
+        val args = arrayListOf("--module-path", "$libs${File.pathSeparator}$deps",)
 
         if (project.properties["mode"] == "debug") {
             args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:9000")
@@ -96,7 +84,12 @@ allprojects {
             name = "app_launcher"
         }
 
-        mergedModule {}
+        mergedModule {
+            requires("java.logging")
+            requires("java.management")
+            requires("java.xml")
+            requires("org.apache.logging.log4j")
+        }
     }
 }
 
