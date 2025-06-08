@@ -8,6 +8,7 @@ module edu.illinois.web.abhaypokh.projectgenesis.cerebrum {
     requires org.apache.logging.log4j;
     requires org.yaml.snakeyaml;
 
-    exports edu.illinois.web.abhaypokh.projectgenesis.cerebrum.api;
     opens edu.illinois.web.abhaypokh.projectgenesis.cerebrum.application to javafx.fxml, javafx.graphics;
+
+    exports edu.illinois.web.abhaypokh.projectgenesis.cerebrum.api;
 }

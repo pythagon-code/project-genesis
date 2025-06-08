@@ -31,11 +31,10 @@ public class JsonTest {
 
         @Override
         public boolean equals(Object other) {
-            if (!(other instanceof MyClass1)) {
+            if (!(other instanceof MyClass1 obj)) {
                 return false;
             }
 
-            MyClass1 obj = (MyClass1) other;
             return (i == obj.i) && (j == obj.j) && (k == obj.k) && (channel == obj.channel);
         }
     }
