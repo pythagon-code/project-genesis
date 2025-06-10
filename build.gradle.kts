@@ -71,7 +71,7 @@ allprojects {
         val args = arrayListOf("--module-path", "$libs${File.pathSeparator}$deps",)
 
         if (project.properties["mode"] == "debug") {
-            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:9000")
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:7000")
         }
 
         jvmArgs = args

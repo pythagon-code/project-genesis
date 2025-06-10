@@ -30,7 +30,7 @@ public class RelayNeuronFactory implements Closeable {
 
     public void build() {
         if (neuronList.isEmpty()) {
-
+            
         }
     }
 

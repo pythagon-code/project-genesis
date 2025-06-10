@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public record SimulatorConfig(
+public record  SimulatorConfig(
     @JsonProperty("SystemConfig") SystemConfig systemConfig,
     @JsonProperty("ModelArchitectureConfig") @Nonnull ModelArchitectureConfig modelArchitectureConfig,
     @JsonProperty("TransformersConfig") @Nonnull TransformersConfig transformersConfig,
