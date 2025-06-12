@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.BrainSimulator;
-import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.channels.MessageChannel;
+import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.channels.PriorityMessageChannel;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.channels.SourceMessageChannel;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.channels.TargetMessageChannel;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.channels.TransmissionMessage;
@@ -32,7 +32,7 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
     private volatile boolean awaken = false, done = false;
 
     public RelayNeuron() {
-        source = new MessageChannel();
+        source = new PriorityMessageChannel();
         targets = new ArrayList<>();
 
         thread = new Thread(this, "RelayNeuron-NeuronThread");

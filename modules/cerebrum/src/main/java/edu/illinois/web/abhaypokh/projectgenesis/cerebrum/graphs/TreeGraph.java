@@ -1,6 +1,7 @@
 package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.graphs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nonnull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +23,7 @@ sealed abstract class TreeGraph extends Graph permits PerfectTreeGraph, FractalT
         leafNodes = new LinkedList<>();
     }
 
-    protected final GraphNode addLeafNode() {
+    protected final @Nonnull GraphNode addLeafNode() {
         GraphNode node = addNode();
         leafNodes.add(node);
         return node;

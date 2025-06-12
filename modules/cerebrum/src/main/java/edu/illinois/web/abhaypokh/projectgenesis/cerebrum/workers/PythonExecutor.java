@@ -43,20 +43,20 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
 
             System.out.println("Python temporary directory: " + tempDir);
 
-            if (!Files.isDirectory(Paths.get("output", ".venv"))) {
-                runSafeCommandAndWait("python", "-m", "venv", "output/.venv");
+            if (!Files.isDirectory(Paths.get("gen", ".venv"))) {
+                runSafeCommandAndWait("python", "-m", "venv", "gen/.venv");
             }
 
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                pythonExec = Paths.get("output", ".venv", "Scripts", "python.exe").toString();
+                pythonExec = Paths.get("gen", ".venv", "Scripts", "python.exe").toString();
             } else {
-                pythonExec = Paths.get("output", ".venv", "bin", "python").toString();
+                pythonExec = Paths.get("gen", ".venv", "bin", "python").toString();
             }
 
-            if (!Files.exists(Paths.get("output", ".venv", "init.toml"))) {
+            if (!Files.exists(Paths.get("gen", ".venv", "init.toml"))) {
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "--upgrade", "pip");
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "-r", requirements);
-                try (PrintWriter pw = new PrintWriter("output/.venv/init.toml")) {
+                try (PrintWriter pw = new PrintWriter("gen/.venv/init.toml")) {
                     pw.println("# Created after all Python requirements have been installed");
                     pw.println("[init]");
                     pw.println("project = \"cerebrum\"");

@@ -1,6 +1,7 @@
 package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.graphs;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreType;
@@ -8,7 +9,7 @@ import jakarta.annotation.Nonnull;
 
 @JsonIgnoreType
 public final class GraphNode {
-    private int id;
+    private final int id;
     private final List<GraphNode> adjacentNodes;
 
     public GraphNode(int id) {
@@ -16,8 +17,8 @@ public final class GraphNode {
         adjacentNodes = new ArrayList<>();
     }
 
-    public Iterable<GraphNode> getAdjacentNodes() {
-        return adjacentNodes;
+    public @Nonnull Iterable<GraphNode> getAdjacentNodes() {
+        return Collections.unmodifiableCollection(adjacentNodes);
     }
 
     void setAdjacentNode(GraphNode node) {
@@ -30,13 +31,13 @@ public final class GraphNode {
 
     @Override
     public @Nonnull String toString() {
-        return "" + id + ": " + adjacentNodes;
+        return id + ": " + adjacentNodes;
     }
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof GraphNode) {
-            return adjacentNodes.equals(other) && (id == ((GraphNode) other).id);
+        if (other instanceof GraphNode otherNode) {
+            return id == otherNode.id && adjacentNodes.equals(otherNode.adjacentNodes);
         }
         else {
             return false;
