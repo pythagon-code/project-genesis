@@ -3,7 +3,7 @@ package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.graphs;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
-final class PerfectTreeGraph<T> extends TreeGraph {
+final class PerfectTreeGraph extends TreeGraph {
     public PerfectTreeGraph(
         @JsonProperty("Tag") String tag,
         @JsonProperty("M") int m,

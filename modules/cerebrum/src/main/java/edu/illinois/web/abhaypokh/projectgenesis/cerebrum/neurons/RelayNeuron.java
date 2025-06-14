@@ -29,7 +29,7 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
     private final Thread thread;
     protected final ModelWorker modelWorker;
     private int neuronId = -1;
-    private volatile boolean awaken = false, done = false;
+    private volatile boolean awoken = false, done = false;
 
     public RelayNeuron() {
         source = new PriorityMessageChannel();
@@ -63,7 +63,7 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
     }
 
     public void awake() {
-        awaken = true;
+        awoken = true;
     }
 
     protected void sendMessage(int channelIdx, String message, double[] latentVector, long targetStep) {
@@ -78,12 +78,12 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
 
             while (source.hasAvailableMessage(brain.heartbeat.getStep())) {
                 TransmissionMessage message = source.removeMessage();
-                awaken = false;
+                awoken = false;
             }
 
-            if (awaken) {
-                onAwaken();
-                awaken = false;
+            if (awoken) {
+                onAwake();
+                awoken = false;
             }
 
             brain.heartbeat.awaitSendMessagePhase();
@@ -112,5 +112,5 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
 
     protected abstract void onMessageReceived(@Nonnull TransmissionMessage message);
 
-    protected abstract void onAwaken();
+    protected abstract void onAwake();
 }

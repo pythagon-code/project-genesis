@@ -12,47 +12,39 @@ public final class GraphFactory {
         String graphType = object.get("graph_type").toString();
         Map<String, Object> graphOptions = (Map<String, Object>) object.get("graph_options");
 
-        switch (tag) {
-            case "perfect-tree":
-                return new PerfectTreeGraph(
-                    tag,
-                    (int) graphOptions.get("m"),
-                    (int) graphOptions.get("height")
-                );
-            case "fractal-tree":
-                return new FractalTreeGraph(
-                    tag,
-                    (int) graphOptions.get("m"),
-                    (int) graphOptions.get("height")
-                );
-            case "complete":
-                return new CompleteGraph(
-                    tag,
-                    (int) graphOptions.get("n")
-                );
-            case "walk":
-                return new WalkGraph(
-                    tag,
-                    (int) graphOptions.get("n")
-                );
-            case "cycle":
-                return new CycleGraph(
-                    tag,
-                    (int) graphOptions.get("n")
-                );
-            case "wheel":
-                return new WheelGraph(
-                    tag,
-                    (int) graphOptions.get("n")
-                );
-            case "custom":
-                return new CustomGraph(
-                    tag,
-                    (int) graphOptions.get("n_vertices"),
-                    (List<List<Integer>>) graphOptions.get("edges")
-                );
-            default:
-                throw new IllegalArgumentException("Unknown graph type: " + graphType);
-        }
+        return switch (tag) {
+            case "perfect-tree" -> new PerfectTreeGraph(
+                tag,
+                (int) graphOptions.get("m"),
+                (int) graphOptions.get("height")
+            );
+            case "fractal-tree" -> new FractalTreeGraph(
+                tag,
+                (int) graphOptions.get("m"),
+                (int) graphOptions.get("height")
+            );
+            case "complete" -> new CompleteGraph(
+                tag,
+                (int) graphOptions.get("n")
+            );
+            case "walk" -> new WalkGraph(
+                tag,
+                (int) graphOptions.get("n")
+            );
+            case "cycle" -> new CycleGraph(
+                tag,
+                (int) graphOptions.get("n")
+            );
+            case "wheel" -> new WheelGraph(
+                tag,
+                (int) graphOptions.get("n")
+            );
+            case "custom" -> new CustomGraph(
+                tag,
+                (int) graphOptions.get("n_vertices"),
+                (List<List<Integer>>) graphOptions.get("edges")
+            );
+            default -> throw new IllegalArgumentException("Unknown graph type: " + graphType);
+        };
     }
 }

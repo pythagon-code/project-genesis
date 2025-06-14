@@ -27,7 +27,7 @@ sealed class MetaNeuron extends RelayNeuron permits ResponseNeuron {
     }
 
     @Override
-    protected void onAwaken() {
+    protected void onAwake() {
 
     }
 }

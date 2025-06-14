@@ -28,12 +28,12 @@ public sealed abstract class Graph implements Iterable<GraphNode>
     public final @JsonProperty("Tag") @Nonnull String tag;
     protected final List<GraphNode> nodes;
 
-    protected Graph(String tag) {
+    protected Graph(@Nonnull String tag) {
         this.tag = tag;
         nodes = new ArrayList<>();
     }
 
-    protected final GraphNode addNode() {
+    protected final @Nonnull GraphNode addNode() {
         GraphNode node = new GraphNode(nodes.size() + 1);
         nodes.add(node);
         return node;

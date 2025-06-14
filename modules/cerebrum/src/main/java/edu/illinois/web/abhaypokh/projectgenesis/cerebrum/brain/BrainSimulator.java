@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.neurons.ResponseNeuron;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.workers.ModelWorkerPool;
+import jakarta.annotation.Nonnull;
 
 public final class BrainSimulator {
     public final SimulatorConfig config;
@@ -135,7 +136,7 @@ public final class BrainSimulator {
         }
     }
 
-    private String getTimestamp() {
+    private @Nonnull String getTimestamp() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss_z");
         return ZonedDateTime.now().format(formatter);
     }

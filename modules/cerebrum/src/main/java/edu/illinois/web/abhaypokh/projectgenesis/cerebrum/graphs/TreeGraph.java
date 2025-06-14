@@ -29,12 +29,12 @@ sealed abstract class TreeGraph extends Graph permits PerfectTreeGraph, FractalT
         return node;
     }
 
-    protected final void buildTree(int n_children, int depth) {
+    protected final void buildTree(int childrenPerParent, int depth) {
         for (int k = 0; k < depth; k++) {
             int size = leafNodes.size();
             for (int i = 0; i < size; i++) {
                 GraphNode parent = leafNodes.removeFirst();
-                for (int j = 0; j < n_children; j++) {
+                for (int j = 0; j < childrenPerParent; j++) {
                     addLeafNode().setAdjacentNode(parent);
                 }
             }

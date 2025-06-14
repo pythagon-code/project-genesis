@@ -68,11 +68,10 @@ allprojects {
         val libs = layout.buildDirectory.dir("libs/").get().asFile.absolutePath
         val deps = layout.buildDirectory.dir("deps/").get().asFile.absolutePath
 
-        val args = arrayListOf("--module-path", "$libs${File.pathSeparator}$deps",)
+        val args = arrayListOf("--module-path", "$libs${File.pathSeparator}$deps")
 
-        if (project.properties["mode"] == "debug") {
+        if (project.properties["mode"] == "debug")
             args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:7000")
-        }
 
         jvmArgs = args
     }

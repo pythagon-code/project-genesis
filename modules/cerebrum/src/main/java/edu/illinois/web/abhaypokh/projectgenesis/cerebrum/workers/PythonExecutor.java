@@ -23,25 +23,20 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
             String[] resources = {"worker.py", "requirements.txt"};
 
             for (String resource : resources) {
-                try (PrintWriter writer = new PrintWriter(Paths.get(tempDir.toString(), resource).toString())) {
-                    try (
-                        BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(
-                                Objects.requireNonNull(
-                                    PythonExecutor.class.getResourceAsStream("/" + resource))))
-                    ) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            writer.println(line);
-                        }
+                try (
+                    PrintWriter writer = new PrintWriter(Paths.get(tempDir.toString(), resource).toString());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        Objects.requireNonNull(PythonExecutor.class.getResourceAsStream("/" + resource))));
+                ) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        writer.println(line);
                     }
                 }
             }
 
             workerScript = Paths.get(tempDir.toString(), "worker.py").toString();
             String requirements = Paths.get(tempDir.toString(), "requirements.txt").toString();
-
-            System.out.println("Python temporary directory: " + tempDir);
 
             if (!Files.isDirectory(Paths.get("gen", ".venv"))) {
                 runSafeCommandAndWait("python", "-m", "venv", "gen/.venv");
