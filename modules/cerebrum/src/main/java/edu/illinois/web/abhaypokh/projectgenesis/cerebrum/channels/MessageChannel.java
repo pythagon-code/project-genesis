@@ -6,7 +6,7 @@ import java.util.Queue;
 import com.fasterxml.jackson.annotation.JsonIgnoreType;
 
 @JsonIgnoreType
-public final class PriorityMessageChannel implements SourceMessageChannel, TargetMessageChannel {
+public final class MessageChannel implements SourceMessageChannel, TargetMessageChannel {
     private final Queue<TransmissionMessage> queue = new ArrayDeque<TransmissionMessage>();
 
     @Override

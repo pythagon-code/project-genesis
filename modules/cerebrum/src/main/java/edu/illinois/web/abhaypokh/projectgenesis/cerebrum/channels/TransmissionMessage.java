@@ -8,16 +8,16 @@ import java.util.Arrays;
 public record TransmissionMessage(
     String message,
     double[] latentVector,
-    int neuronId,
+    int senderId,
     long targetStep
 ) implements Comparable<TransmissionMessage> {
     @Override
     public int compareTo(TransmissionMessage other) {
         if (targetStep == other.targetStep) {
-            if (neuronId == other.neuronId) {
+            if (senderId == other.senderId) {
                 return Arrays.compare(latentVector, other.latentVector);
             }
-            return Long.compare(neuronId, other.neuronId);
+            return Long.compare(senderId, other.senderId);
         }
         return Long.compare(targetStep, other.targetStep);
     }
