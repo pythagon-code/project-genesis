@@ -52,4 +52,8 @@ public final class ModelWorkerPool implements Closeable {
             worker.close();
         }
     }
+
+    public static void nothing() {
+        ModelWorker.nothing();
+    }
 }

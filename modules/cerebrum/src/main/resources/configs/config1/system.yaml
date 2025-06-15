@@ -1,4 +1,5 @@
 system:
     python_worker_count: 4
+    use_cuda: yes
     preload_from: ~
     checkpoint_frequency: 240

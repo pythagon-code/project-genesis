@@ -28,6 +28,7 @@ public final class ModelWorker extends PythonClient {
     public synchronized @Nonnull DataObjects.ModelTransmissionOutput invokeModel(int modelId) {
         return sendAndReceiveObject(new DataObjects.ModelInput(
             "InvokeModel", modelId), DataObjects.ModelTransmissionOutput.class);
-
     }
+
+    public static void nothing() {}
 }

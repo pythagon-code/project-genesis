@@ -77,16 +77,13 @@ sealed abstract class PythonClient extends PythonExecutor implements Closeable p
     public void close() {
         try {
             serverIn.close();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.err.println(e.getMessage());
-        }
-        finally {
+        } finally {
             serverOut.close();
             try {
                 socket.close();
-            }
-            catch (IOException e2) {
+            } catch (IOException e2) {
                 System.err.println(e2.getMessage());
             }
         }

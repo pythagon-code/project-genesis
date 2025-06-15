@@ -2,6 +2,8 @@ package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.application;
 
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.BrainSimulator;
 import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain.SimulatorSettings;
+import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.workers.ModelWorker;
+import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.workers.ModelWorkerPool;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
@@ -17,11 +19,13 @@ public class CerebrumApp extends Application implements Closeable {
     @Override
     public void start(Stage primaryStage) throws IOException {
         Logger logger = LogManager.getLogger(getClass());
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1; i++) {
             logger.info("Hello World!");
             logger.debug("Hello World!");
             logger.warn("Hello World!");
         }
+
+        ModelWorkerPool.nothing();
 
         System.out.println(System.getProperty("user.dir"));
 

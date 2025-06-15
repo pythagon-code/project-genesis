@@ -14,6 +14,7 @@ import java.util.Objects;
 
 sealed abstract class PythonExecutor implements Closeable permits PythonClient {
     private static final String pythonExec, workerScript;
+    private static final StringBuilder requirementsText = new StringBuilder();
 
     static {
         try {
@@ -31,6 +32,9 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         writer.println(line);
+                        if (resource.equals("requirements.txt")) {
+                            requirementsText.append(line).append("\n");
+                        }
                     }
                 }
             }
@@ -48,17 +52,30 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                 pythonExec = Paths.get("gen", ".venv", "bin", "python").toString();
             }
 
-            if (!Files.exists(Paths.get("gen", ".venv", "init.toml"))) {
+            Path initTomlPath = Paths.get("gen", ".venv", "init.toml");
+
+            StringBuilder initTomlText = new StringBuilder();
+            if (Files.exists(initTomlPath)) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(initTomlPath.toString()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        initTomlText.append(line).append("\n");
+                    }
+                }
+            }
+
+            String wrappedRequirements = '"' + requirementsText.toString().replace("\n", "\\n") + '"';
+            if (initTomlText.isEmpty() || !initTomlText.toString().contains(wrappedRequirements)) {
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "--upgrade", "pip");
                 runSafeCommandAndWait(pythonExec, "-m", "pip", "install", "-r", requirements);
                 try (PrintWriter pw = new PrintWriter("gen/.venv/init.toml")) {
                     pw.println("# Created after all Python requirements have been installed");
                     pw.println("[init]");
-                    pw.println("project = \"cerebrum\"");
                     pw.println("time = \"" + ZonedDateTime.now() + "\"");
+                    pw.println("requirements = " + wrappedRequirements);
                 }
             }
-
+        System.out.println("Python requirements installed");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
