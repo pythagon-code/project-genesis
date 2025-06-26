@@ -4,8 +4,7 @@ import java.util.concurrent.Phaser;
 
 public final class MessageHeartbeat {
     private final Phaser processMessageBarrier, sendMessageBarrier;
-    private long step = 0;
-
+    private volatile long step = 0;
     private boolean running = false;
 
     public MessageHeartbeat() {
@@ -36,6 +35,7 @@ public final class MessageHeartbeat {
 
     synchronized void step() {
         running = true;
+
         processMessageBarrier.arrive();
 
         do {

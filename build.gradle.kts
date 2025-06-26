@@ -1,7 +1,8 @@
+import java.nio.file.Paths
+
 plugins {
     application
     id("org.openjfx.javafxplugin") version "0.1.0"
-    id("org.beryx.jlink") version "3.1.1"
 }
 
 group = "edu.illinois.web.abhaypokh.projectgenesis"
@@ -10,11 +11,11 @@ version = "1.0-SNAPSHOT"
 allprojects {
     apply(plugin = "java")
     apply(plugin = "application")
-    apply(plugin = "org.beryx.jlink")
 
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(23))
+            vendor.set(JvmVendorSpec.ADOPTIUM)
         }
         modularity.inferModulePath = true
     }
@@ -47,12 +48,14 @@ allprojects {
     }
 
     tasks.register<Copy>("copyDeps") {
+        dependsOn(tasks.build)
+
         from(configurations.runtimeClasspath)
         into(layout.buildDirectory.dir("deps/"))
     }
 
     tasks.register<JavaExec>("runModularJar") {
-        dependsOn(tasks.build, tasks.getByName("copyDeps"))
+        dependsOn(tasks.getByName("copyDeps"))
 
         javaLauncher.set(
             javaToolchains.launcherFor {
@@ -71,24 +74,36 @@ allprojects {
         val args = arrayListOf("--module-path", "$libs${File.pathSeparator}$deps")
 
         if (project.properties["mode"] == "debug")
-            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:7000")
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:9000")
 
         jvmArgs = args
     }
 
-    jlink {
-        options.set(listOf("--strip-debug", "--no-header-files", "--no-man-pages"))
+    tasks.register<Delete>("cleanImage") { delete(layout.buildDirectory.dir("image/")) }
 
-        launcher {
-            name = "app_launcher"
-        }
+    tasks.register<Exec>("jlink") {
+        dependsOn(tasks.getByName("copyDeps"), tasks.getByName("cleanImage"))
 
-        mergedModule {
-            requires("java.logging")
-            requires("java.management")
-            requires("java.xml")
-            requires("org.apache.logging.log4j")
-        }
+        var launcher = javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(23))
+            vendor.set(JvmVendorSpec.ADOPTIUM)
+        }.get().metadata.installationPath.asFile.toString()
+
+        var jlink = Paths.get(launcher, "bin", "jlink").toAbsolutePath().toString()
+
+        var libs = layout.buildDirectory.dir("libs/").get().asFile.absolutePath
+        var deps = layout.buildDirectory.dir("deps/").get().asFile.absolutePath
+
+        commandLine = listOf(
+            jlink,
+            "--module-path", "$libs${File.pathSeparator}$deps",
+            "--add-modules", application.mainModule.get(),
+            "--output", layout.buildDirectory.dir("image/").get().asFile.absolutePath,
+            "--launcher", "app_launcher=${application.mainModule.get()}/${application.mainClass.get()}",
+            "--strip-debug",
+            "--no-header-files",
+            "--no-man-pages"
+        )
     }
 }
 

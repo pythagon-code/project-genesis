@@ -1,3 +1,2 @@
 architecture:
-    transformer_base: gpt2-medium
-
+    encoder_decoder_base: t5-small

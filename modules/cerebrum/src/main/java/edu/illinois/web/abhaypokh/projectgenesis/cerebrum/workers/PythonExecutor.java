@@ -27,7 +27,7 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                 try (
                     PrintWriter writer = new PrintWriter(Paths.get(tempDir.toString(), resource).toString());
                     BufferedReader reader = new BufferedReader(new InputStreamReader(
-                        Objects.requireNonNull(PythonExecutor.class.getResourceAsStream("/" + resource))));
+                        Objects.requireNonNull(PythonExecutor.class.getResourceAsStream("/" + resource))))
                 ) {
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -43,7 +43,15 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
             String requirements = Paths.get(tempDir.toString(), "requirements.txt").toString();
 
             if (!Files.isDirectory(Paths.get("gen", ".venv"))) {
-                runSafeCommandAndWait("python", "-m", "venv", "gen/.venv");
+                installVenvWithConda();
+            }
+
+            try {
+                runSafeCommandAndWait("conda run -n project-genesis-cerebrum-py312 python --version".split(" "));
+            } catch (RuntimeException e) {
+                System.out.println("The conda environment was removed");
+                System.out.println("Recreating conda environment");
+                installVenvWithConda();
             }
 
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
@@ -75,7 +83,7 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
                     pw.println("requirements = " + wrappedRequirements);
                 }
             }
-        System.out.println("Python requirements installed");
+            System.out.println("Python requirements installed");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -103,10 +111,17 @@ sealed abstract class PythonExecutor implements Closeable permits PythonClient {
 
         try {
             process.waitFor();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Cannot interrupt during Python process close-");
         }
-        catch (InterruptedException e) {
-            throw new RuntimeException("Cannot interrupt during Python process end");
-        }
+    }
+
+    private static void installVenvWithConda() {
+        System.out.println("Creating conda environment project-genesis-cerebrum-py312");
+        runSafeCommandAndWait(
+            "conda create --yes -n project-genesis-cerebrum-py312 python=3.12.3 -c conda-forge".split(" "));
+        runSafeCommandAndWait(
+            "conda run -n project-genesis-cerebrum-py312 python -m venv gen/.venv".split(" "));
     }
 
     private static void runSafeCommandAndWait(@Nonnull String... command) {
