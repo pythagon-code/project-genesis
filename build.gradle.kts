@@ -57,12 +57,6 @@ allprojects {
     tasks.register<JavaExec>("runModularJar") {
         dependsOn(tasks.getByName("copyDeps"))
 
-        javaLauncher.set(
-            javaToolchains.launcherFor {
-                languageVersion.set(JavaLanguageVersion.of(23))
-            }
-        )
-
         mainModule.set(application.mainModule.get())
         mainClass.set(application.mainClass.get())
 

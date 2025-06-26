@@ -1,7 +1,6 @@
 module edu.illinois.web.abhaypokh.projectgenesis.cerebrum {
     requires com.fasterxml.jackson.databind;
     requires jakarta.annotation;
-    requires java.logging;
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
