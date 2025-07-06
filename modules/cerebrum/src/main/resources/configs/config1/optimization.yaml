@@ -1,7 +1,7 @@
 optimization:
     training:
         frequency: 10
-        num_iterations: 200
+        iterations: 200
     learning_rate: 0.001
     batch_size: 32
     replay_memory: 2048

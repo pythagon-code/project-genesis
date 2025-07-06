@@ -1,6 +1,8 @@
 model:
     random_seed: 1
 
+    fnn_hidden_size_deviation: 32
+
     neuron_activity:
         goal: 0.2
         force: 10
@@ -9,27 +11,31 @@ model:
         min: 5
         max: 20
 
-    short_term_memory:
-        capacity: 32
-        appendage:
-            frequency: 40
-            latent_dim: 64
-
-    long_term_memory:
-        capacity: 64
-        appendage:
-            frequency: 100
-            latent_dim: 64
+    memory:
+        block_capacity: 16
+        appendage_frequency: 40
+        block_fnn: [ 256, 256, 256 ]
 
     levels:
         -   graph: crossed-box
             latent_dim: 1024
-            buffer_size: 4
+            buffer_size: 4096
+            memory_size: 2048
+            composition_fnn: [ 1024, 1024, 1024 ]
+            decomposition_fnn: [ 1024, 1024, 1024 ]
 
         -   graph: crossed-box
             latent_dim: 512
-            buffer_size: 4
+            buffer_size: 2048
+            memory_size: 1024
+            composition_fnn: [ 1024, 1024, 1024 ]
+            decomposition_fnn: [ 1024, 1024, 1024 ]
 
         -   graph: crossed-box
             latent_dim: 256
-            buffer_size: 4
+            buffer_size: 1024
+            memory_size: 512
+            composition_fnn: [ 512, 1024, 512 ]
+            decomposition_fnn: [ 512, 1024, 512 ]
+
+    primitive_neuron_fnn: [ 512, 1024, 1024, 512 ]

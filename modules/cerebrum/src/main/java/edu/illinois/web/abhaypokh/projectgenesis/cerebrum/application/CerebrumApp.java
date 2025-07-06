@@ -41,9 +41,13 @@ public class CerebrumApp extends Application implements Closeable {
             throw new IOError(e);
         }
 
-        new Thread(() -> new BrainSimulator(settings).start(context), "BrainSimulator-Thread");
+        BrainSimulator brain = new BrainSimulator(settings);
+
+        new Thread(() -> brain.start(context), "BrainSimulator-Thread");
 
         primaryStage.show();
+
+        System.out.println("Done");
     }
 
     @Override

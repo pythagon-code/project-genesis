@@ -18,9 +18,9 @@ public class YamlTest {
             """);
         assertTrue(object.get("test") instanceof List<?>);
         List<?> lists = (List<?>) object.get("test");
-        assertTrue(lists.get(0) instanceof List<?>);
-        List<?> list0 = (List<?>) lists.get(0);
-        assertTrue(list0.get(0) instanceof Integer);
+        assertTrue(lists.getFirst() instanceof List<?>);
+        List<?> list0 = (List<?>) lists.getFirst();
+        assertTrue(list0.getFirst() instanceof Integer);
 
         System.out.println("yamlTestNestedLists1():");
         System.out.println(object);
