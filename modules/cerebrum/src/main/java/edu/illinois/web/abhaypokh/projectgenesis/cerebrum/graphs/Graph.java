@@ -25,7 +25,7 @@ import jakarta.annotation.Nonnull;
 public sealed abstract class Graph implements Iterable<GraphNode>
     permits TreeGraph, WalkGraph, CompleteGraph, CustomGraph
 {
-    public final @JsonProperty("Tag") @Nonnull String tag;
+    public final @JsonProperty("Tag") String tag;
     protected final List<GraphNode> nodes;
 
     protected Graph(@Nonnull String tag) {

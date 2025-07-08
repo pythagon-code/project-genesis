@@ -18,24 +18,26 @@ model:
 
     levels:
         -   graph: crossed-box
-            latent_dim: 1024
+            child_latent_dim: 1024
             buffer_size: 4096
             memory_size: 2048
-            composition_fnn: [ 1024, 1024, 1024 ]
-            decomposition_fnn: [ 1024, 1024, 1024 ]
+            composition_fnn: [ 1024, 1024, 10000, 10000 ]
+            decomposition_fnn: [ 10000, 10000, 1024, 1024 ]
 
         -   graph: crossed-box
-            latent_dim: 512
+            child_latent_dim: 512
             buffer_size: 2048
             memory_size: 1024
             composition_fnn: [ 1024, 1024, 1024 ]
             decomposition_fnn: [ 1024, 1024, 1024 ]
 
         -   graph: crossed-box
-            latent_dim: 256
+            child_latent_dim: 256
             buffer_size: 1024
             memory_size: 512
             composition_fnn: [ 512, 1024, 512 ]
             decomposition_fnn: [ 512, 1024, 512 ]
 
-    primitive_neuron_fnn: [ 512, 1024, 1024, 512 ]
+    primitive_neuron:
+        memory_size: 256
+        processing_fnn: [ 512, 1024, 1024, 512 ]

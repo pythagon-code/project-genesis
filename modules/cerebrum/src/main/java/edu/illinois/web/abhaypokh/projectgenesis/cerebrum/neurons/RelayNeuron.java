@@ -22,9 +22,9 @@ import jakarta.annotation.Nonnull;
     @JsonSubTypes.Type(value = MetaNeuron.class),
     @JsonSubTypes.Type(value = ResponseNeuron.class)
 })
-public sealed abstract class RelayNeuron implements Runnable, Closeable permits MetaNeuron {
+public sealed abstract class RelayNeuron implements Runnable, Closeable permits PrimitiveNeuron, MetaNeuron {
     private final SourceMessageChannel source;
-    private final List<TargetMessageChannel> targets;
+    private final List<TargetMessageChannel> sidewaysTargets, downwardTargets, upwardTargets;
     private BrainSimulator brain = null;
     private final Thread thread;
     protected final ModelWorker modelWorker;
@@ -33,7 +33,9 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
 
     public RelayNeuron() {
         source = new MessageChannel();
-        targets = new ArrayList<>();
+        sidewaysTargets = new ArrayList<>();
+        downwardTargets = new ArrayList<>();
+        upwardTargets = new ArrayList<>();
 
         thread = new Thread(this, "RelayNeuron-NeuronThread");
 
@@ -46,16 +48,22 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
         brain.heartbeat.registerHeartbeat();
     }
 
-    private void addNeighbor(@Nonnull RelayNeuron neighbor) {
-        if (
-            targets.contains((TargetMessageChannel) neighbor.source)
-            || neighbor.targets.contains((TargetMessageChannel) source)
-        ) {
-            throw new IllegalArgumentException();
+    public void addNeighbor(@Nonnull RelayNeuron neighbor) {
+        if (sidewaysTargets.contains((TargetMessageChannel) neighbor.source)) {
+            return;
         }
 
-        targets.add((TargetMessageChannel) neighbor.source);
-        neighbor.targets.add((TargetMessageChannel) source);
+        sidewaysTargets.add((TargetMessageChannel) neighbor.source);
+        neighbor.sidewaysTargets.add((TargetMessageChannel) source);
+    }
+
+    public void addChild(@Nonnull RelayNeuron child) {
+        if (downwardTargets.contains((TargetMessageChannel) child.source)) {
+            return;
+        }
+
+        downwardTargets.add((TargetMessageChannel) child.source);
+        child.upwardTargets.add((TargetMessageChannel) source);
     }
 
     public void start() {
@@ -64,11 +72,6 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
 
     public void awake() {
         awoken = true;
-    }
-
-    protected void sendMessage(int channelIdx, String message, double[] latentVector, long targetStep) {
-        TargetMessageChannel target = targets.get(channelIdx);
-        target.addMessage(new TransmissionMessage(message, latentVector, neuronId, targetStep));
     }
 
     @Override
@@ -91,8 +94,7 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
             while (source.hasAvailableMessage(brain.heartbeat.getStep())) {
                 onMessageReceived(source.removeMessage());
             }
-        }
-        while (!done);
+        } while (!done);
     }
 
     @Override
@@ -100,14 +102,36 @@ public sealed abstract class RelayNeuron implements Runnable, Closeable permits 
         done = true;
         try {
             thread.join();
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             throw new IllegalThreadStateException(e.getMessage());
         }
     }
 
-    protected int getTargetChannelCount() {
-        return targets.size();
+    protected void sendMessageSideways(int channelIdx, String message, double[] latentVector, long targetStep) {
+        TargetMessageChannel target = sidewaysTargets.get(channelIdx);
+        target.addMessage(new TransmissionMessage(message, latentVector, neuronId, targetStep, false));
+    }
+
+    protected void sendMessageDownward(int channelIdx, String message, double[] latentVector, long targetStep) {
+        TargetMessageChannel target = downwardTargets.get(channelIdx);
+        target.addMessage(new TransmissionMessage(message, latentVector, neuronId, targetStep, false));
+    }
+
+    protected void sendMessageUpward(int channelIdx, String message, double[] latentVector, long targetStep) {
+        TargetMessageChannel target = upwardTargets.get(channelIdx);
+        target.addMessage(new TransmissionMessage(message, latentVector, neuronId, targetStep, true));
+    }
+
+    protected int getSidewaysTargetCount() {
+        return sidewaysTargets.size();
+    }
+
+    protected int getDownwardTargetCount() {
+        return downwardTargets.size();
+    }
+
+    protected int getUpwardTargetCount() {
+        return upwardTargets.size();
     }
 
     protected abstract void onMessageReceived(@Nonnull TransmissionMessage message);

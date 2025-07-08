@@ -9,7 +9,7 @@ import jakarta.annotation.Nonnull;
 
 @JsonIgnoreType
 public final class GraphNode {
-    private final int id;
+    public final int id;
     private final List<GraphNode> adjacentNodes;
 
     public GraphNode(int id) {
@@ -31,15 +31,14 @@ public final class GraphNode {
 
     @Override
     public @Nonnull String toString() {
-        return id + ": " + adjacentNodes;
+        return "GraphNode[id=" + id + "]";
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof GraphNode otherNode) {
             return id == otherNode.id && adjacentNodes.equals(otherNode.adjacentNodes);
-        }
-        else {
+        } else {
             return false;
         }
     }

@@ -8,8 +8,10 @@ import java.util.List;
 
 sealed class MetaNeuron extends RelayNeuron permits ResponseNeuron {
     private final List<RelayNeuron> subNeuronList;
-    
-    public MetaNeuron() {
+    private final int level;
+
+    public MetaNeuron(int level) {
+        this.level = level;
         subNeuronList = new ArrayList<>();
     }
 

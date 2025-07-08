@@ -9,7 +9,8 @@ public record TransmissionMessage(
     String message,
     double[] latentVector,
     int senderId,
-    long targetStep
+    long targetStep,
+    boolean isUpward
 ) implements Comparable<TransmissionMessage> {
     @Override
     public int compareTo(TransmissionMessage other) {

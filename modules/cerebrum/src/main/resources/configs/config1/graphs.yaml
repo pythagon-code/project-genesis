@@ -1,54 +1,53 @@
 graphs:
-    graph_structures:
-        -   tag: my-simple-tree
-            graph_type: perfect-tree
-            graph_options:
-                m: 3
-                height: 1
+    -   tag: my-simple-tree
+        graph_type: perfect-tree
+        graph_options:
+            m: 3
+            height: 1
 
-        -   tag: my-complex-tree
-            graph_type: fractal-tree
-            graph_options:
-                m: 3
-                height: 2
+    -   tag: my-complex-tree
+        graph_type: fractal-tree
+        graph_options:
+            m: 3
+            height: 2
 
-        -   tag: triangle
-            graph_type: cycle
-            graph_options:
-                n: 3
+    -   tag: triangle
+        graph_type: cycle
+        graph_options:
+            n: 3
 
-        -   tag: square
-            graph_type: cycle
-            graph_options:
-                n: 4
+    -   tag: square
+        graph_type: cycle
+        graph_options:
+            n: 4
 
-        -   tag: pentagon
-            graph_type: cycle
-            graph_options:
-                n: 5
+    -   tag: pentagon
+        graph_type: cycle
+        graph_options:
+            n: 5
 
-        -   tag: tetrahedron
-            graph_type: complete
-            graph_options:
-                n: 4
+    -   tag: tetrahedron
+        graph_type: complete
+        graph_options:
+            n: 4
 
-        -   tag: crossed-box
-            graph_type: wheel
-            graph_options:
-                n: 4
+    -   tag: crossed-box
+        graph_type: wheel
+        graph_options:
+            n: 4
 
-        -   tag: my-simple-walk
-            graph_type: walk
-            graph_options:
-                n: 4
+    -   tag: my-simple-walk
+        graph_type: walk
+        graph_options:
+            n: 4
 
-        -   tag: H
-            graph_type: custom
-            graph_options:
-                vertex_count: 6
-                edges:
-                    -   [1, 2]
-                    -   [2, 3]
-                    -   [4, 5]
-                    -   [5, 6]
-                    -   [2, 5]
+    -   tag: H
+        graph_type: custom
+        graph_options:
+            vertex_count: 6
+            edges:
+                -   [1, 2]
+                -   [2, 3]
+                -   [4, 5]
+                -   [5, 6]
+                -   [2, 5]

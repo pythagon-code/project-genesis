@@ -1,17 +1,18 @@
 package edu.illinois.web.abhaypokh.projectgenesis.cerebrum.brain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.graphs.Graph;
+import edu.illinois.web.abhaypokh.projectgenesis.cerebrum.graphs.GraphFactory;
 import jakarta.annotation.Nonnull;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 public record  SimulatorConfig(
     @JsonProperty("SystemConfig") @Nonnull SystemConfig systemConfig,
-    @JsonProperty("GraphsConfig") @Nonnull GraphsConfig graphsConfig,
+    @JsonProperty("GraphsConfig") @Nonnull List<Graph> graphList,
     @JsonProperty("ModelConfig") @Nonnull ModelConfig modelConfig,
     @JsonProperty("OptimizationConfig") @Nonnull OptimizationConfig optimizationConfig
 ) {
@@ -33,7 +34,7 @@ public record  SimulatorConfig(
     ) {
         this(
             new SystemConfig((Map<String, Object>) systemMap.get("system")),
-            new GraphsConfig((Map<String, Object>) graphsMap.get("graphs")),
+            getNestedFieldAsList(GraphFactory::createGraph, graphsMap, "graphs"),
             new ModelConfig((Map<String, Object>) modelMap.get("model")),
             new OptimizationConfig((Map<String, Object>) optimizationMap.get("optimization"))
         );
@@ -56,30 +57,6 @@ public record  SimulatorConfig(
         }
     }
 
-    public record GraphsConfig(
-        @JsonProperty("GraphStructures") @Nonnull List<GraphStructure> graphStructures
-    ) {
-        private GraphsConfig(@Nonnull Map<String, Object> map) {
-            this(
-                getNestedFieldAsList(GraphStructure::new, map, "graph_structures")
-            );
-        }
-
-        public record GraphStructure(
-            @JsonProperty("Tag") @Nonnull String tag,
-            @JsonProperty("GraphType") @Nonnull String graphType,
-            @JsonProperty("GraphOptions") @Nonnull Map<String, Object> graphOptions
-        ) {
-            private GraphStructure(@Nonnull Map<String, Object> map) {
-                this(
-                    getNestedField(map, "tag"),
-                    getNestedField(map, "graph_type"),
-                    getNestedField(map, "graph_options")
-                );
-            }
-        }
-    }
-
     public record ModelConfig(
         @JsonProperty("RandomSeed") int randomSeed,
         @JsonProperty("FnnHiddenSizeDeviation") int fnnHiddenSizeDeviation,
@@ -89,8 +66,8 @@ public record  SimulatorConfig(
         @JsonProperty("MemoryAppendageFrequency") int memoryAppendageFrequency,
         @JsonProperty("MemoryBlockFnn") @Nonnull List<Integer> memoryBlockFnn,
         @JsonProperty("Levels") @Nonnull List<Level> levels,
-        @JsonProperty("PrimitiveNeuronFnn") @Nonnull List<Integer> primitiveNeuronFnn
-
+        @JsonProperty("PrimitiveNeuronProcessingFnn") @Nonnull List<Integer> primitiveNeuronProcessingFnn,
+        @JsonProperty("PrimitiveNeuronMemorySize") int primitiveNeuronMemorySize
     ) {
         private ModelConfig(@Nonnull Map<String, Object> map) {
             this(
@@ -102,13 +79,14 @@ public record  SimulatorConfig(
                 getNestedField(map, "memory", "appendage_frequency"),
                 getNestedField(map, "memory", "block_fnn"),
                 getNestedFieldAsList(Level::new, map, "levels"),
-                getNestedField(map, "primitive_neuron_fnn")
+                getNestedField(map, "primitive_neuron", "processing_fnn"),
+                getNestedField(map, "primitive_neuron", "memory_size")
             );
         }
 
         public record Level(
             @JsonProperty("Graph") @Nonnull String graph,
-            @JsonProperty("LatentDim") int latentDim,
+            @JsonProperty("ChildLatentDim") int childLatentDim,
             @JsonProperty("BufferSize") int bufferSize,
             @JsonProperty("MemorySize") int memorySize,
             @JsonProperty("CompositionFnn") @Nonnull List<Integer> compositionFnn,
@@ -117,7 +95,7 @@ public record  SimulatorConfig(
             private Level(@Nonnull Map<String, Object> object) {
                 this(
                     getNestedField(object, "graph"),
-                    getNestedField(object, "latent_dim"),
+                    getNestedField(object, "child_latent_dim"),
                     getNestedField(object, "buffer_size"),
                     getNestedField(object, "memory_size"),
                     getNestedField(object, "composition_fnn"),
