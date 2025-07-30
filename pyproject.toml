@@ -1,20 +1,37 @@
 [build-system]
-requires = [ "poetry-core>=2.0.0" ]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "project_genesis"
 version = "0.1.0"
 description = "Will add later."
-authors = [
-    { name = "Abhay Pokhriyal", email = "abhaypokh89@gmail.com" }
-]
+authors = ["Abhay Pokhriyal <abhaypokh89@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
 
-]
+[[tool.poetry.packages]]
+include = "project_genesis"
+from = "src"
 
-[project.urls]
-repository = ""
+[tool.poetry.urls]
+repository = "https://github.com/pythagon-code/project-genesis"
+
+[[tool.poetry.source]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+priority = "supplemental"
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+nltk = "^3.9.1"
+numpy = "^2.3.2"
+torch = {version = "^2.7.1", source = "pytorch-cu128"}
+transformers = "^4.54.1"
+tqdm = "^4.67.1"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.4.1"
+
+[tool.poetry.scripts]
+main = "project_genesis.main:main"
