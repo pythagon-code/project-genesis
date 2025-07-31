@@ -9,3 +9,4 @@ class Cerebrum:
 
 
     def run(self) -> None:
+        ...

@@ -1,4 +1,4 @@
-from .cerebrum import Cerebrum
+from .core.cerebrum import Cerebrum
 
 
 def main() -> None:
