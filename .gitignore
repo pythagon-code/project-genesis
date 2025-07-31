@@ -1,13 +1,22 @@
-# IDE specific
-/.idea/
-/.vscode/
+# IDE configurations
+.idea/
+.vscode/
 
 # OS metadata files
 .DS_Store
 Thumbs.db
 
-# Python cache files
-**/__pycache__/
+# Python cache
+__pycache__/
 
-# Use this directory for testing
+# Pytest cache
+.pytest_cache/
+
+# Target distributions
+/dist/
+
+# Program output and logs
+/gen/
+
+# Use this directory for experimental testing
 /dev/
