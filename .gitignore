@@ -15,8 +15,10 @@ __pycache__/
 # Target distributions
 /dist/
 
-# Program output and logs
-/gen/
+# Program output
+/logs/
+/models/
 
-# Use this directory for experimental testing
+# Use these directories for experimental testing and saving
 /dev/
+/temp/
