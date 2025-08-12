@@ -1,0 +1,18 @@
+graphs:
+    square:
+        vertex_count: 4
+        edges:
+            - [1, 2]
+            - [2, 3]
+            - [3, 4]
+            - [4, 1]
+
+    diamond:
+        vertex_count: 5
+        edges:
+            - [1, 2]
+            - [2, 3]
+            - [3, 4]
+            - [4, 1]
+            - [1, 5]
+            - [3, 5]
