@@ -23,8 +23,11 @@ class Neuron(ABC):
         self.logger = logging.getLogger(name)
         self.parent: Optional[Neuron] = None
         self.siblings: list[Neuron] = []
-        self.neuron_list.append(self)
         self.message_queue: PriorityQueue[Message] = PriorityQueue()
+
+
+    def send_message(self, message: Message) -> None:
+        self.message_queue.put(message)
 
 
     def get_available_messages(self) -> Iterable[Message]:
@@ -37,6 +40,8 @@ class Neuron(ABC):
 
 
     def set_sibling(self, sibling: Neuron) -> None:
+        assert sibling not in self.siblings
+
         self.siblings.append(sibling)
         sibling.siblings.append(self)
 

@@ -1,0 +1,6 @@
+encodings:
+    unit_neuron:
+        memory_lstm:
+            hidden_size: 2
+            output_fnn: [2, 2]
+            prediction_head_fnn: []

@@ -1,0 +1,3 @@
+optimization:
+    base_learning_rate: 0.001
+    training_iterations: 5
