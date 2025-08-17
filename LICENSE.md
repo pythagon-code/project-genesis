@@ -2,9 +2,9 @@
 
 ### Warning
 
-Please read `CODE_OF_CONDUCT.md` before accessing the software and its methodology.
-Only authorized individuals are permitted to view the source code
-and methodologies described therein.
+Please read `CODE_OF_CONDUCT.md` before accessing the software and documentation.
+Only authorized individuals who have signed an agreement are permitted
+to view the source code and methodologies described therein.
 
 ### Software Purpose
 
@@ -14,7 +14,8 @@ capable of thought, reason, and emotions.
 ### Terms and Conditions
 
 Use by companies or for any commercial purposes is strictly prohibited
-unless a patent license has been explicitly granted.
+unless a patent license has been explicitly granted. Disclosing information
+specific to the project's methodologies is also forbidden.
 
 ### Patent Note
 

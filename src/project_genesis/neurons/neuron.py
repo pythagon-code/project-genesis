@@ -1,8 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import logging
-from typing import Any, Iterable, Optional, TYPE_CHECKING
 from queue import PriorityQueue
+from typing import Any, Iterable, Optional, TYPE_CHECKING
 from .message import Message
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ class Neuron(ABC):
         root.neuron_list.append(self)
         self.logger = logging.getLogger(name)
         self.parent: Optional[Neuron] = None
-        self.siblings: list[Neuron] = []
+        self.receivers: dict[Neuron, int] = {}
         self.message_queue: PriorityQueue[Message] = PriorityQueue()
 
 
@@ -37,13 +37,14 @@ class Neuron(ABC):
 
     def set_parent(self, parent: MetaNeuron) -> None:
         self.parent = parent
+        self.receivers[parent] = 0
 
 
-    def set_sibling(self, sibling: Neuron) -> None:
-        assert sibling not in self.siblings
+    def set_neighbor(self, neighbor: Neuron) -> None:
+        assert neighbor not in self.receivers.keys() and neighbor not in neighbor.receivers.keys()
 
-        self.siblings.append(sibling)
-        sibling.siblings.append(self)
+        self.receivers[neighbor] = len(self.receivers) + 1
+        neighbor.receivers[self] = len(neighbor.receivers) + 1
 
 
     @abstractmethod

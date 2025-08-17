@@ -15,4 +15,4 @@ architecture:
 
     root_neuron_delay: 2
 
-    word_delay: 200
+    token_delay: 200
