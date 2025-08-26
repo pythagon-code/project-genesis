@@ -1,16 +1,18 @@
 import torch
-from typing import Optional
+from typing import Any, Optional
 from torch import nn
-from .fnn import FNN
+from .fnn import Fnn
+
 
 class Composition(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, level: int, config: dict[str, Any]) -> None:
         super().__init__()
-        self.q_network = FNN([32, 32, 32])
-        self.k_network = FNN([32, 32, 32])
-        self.v_network = FNN([32, 32, 32])
-        self.multiheaded_attn = nn.MultiheadAttention(32, 4)
-        self.fnn = FNN([32, 32, 32])
+
+        self.q_network = Fnn([4096, 4096, 4096])
+        self.k_network = Fnn([4096, 4096, 4096])
+        self.v_network = Fnn([4096, 4096, 4096])
+        self.multiheaded_attn = nn.MultiheadAttention(4096, 4)
+        self.fnn = Fnn([4096, 4096, 4096])
         self.attn_weights: Optional[torch.Tensor] = None
 
 

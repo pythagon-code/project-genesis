@@ -1,18 +1,15 @@
 architecture:
     random_seed: 1
-
     neuron_activity:
         goal: 0.1
-        smoothness: 3
-        two_targets_probability:
-            min: 0.2
-            max: 0.5
-        goal_ceiling: 0.2
-
+        calculation_smoothness: 20
+        upward_force: 0.5
+        downward_force: 0.5
     delay:
         min: 4
         max: 8
-
-    root_neuron_delay: 2
-
+    root_neuron_delay: 3
     token_delay: 200
+    encoding:
+        unit: 128
+        scaling_factor: 2

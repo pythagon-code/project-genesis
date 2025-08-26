@@ -1,5 +1,5 @@
 from ..neurons.root_neuron import RootNeuron
-from ..configs.configs import get_config
+from ..configs.config import get_config
 import logging
 
 class Cerebrum:

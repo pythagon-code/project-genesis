@@ -6,7 +6,6 @@ graphs:
             - [2, 3]
             - [3, 4]
             - [4, 1]
-
     diamond:
         vertex_count: 5
         edges:
