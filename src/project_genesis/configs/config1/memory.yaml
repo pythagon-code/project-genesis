@@ -1,7 +1,0 @@
-memory:
-    hidden_size: 2
-    num_layers: 4
-    prediction:
-        num_heads: 3
-        confidence_floor: 0.1
-        fnn: [1, 1]

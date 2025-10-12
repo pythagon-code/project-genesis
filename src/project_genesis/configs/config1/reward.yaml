@@ -1,4 +1,0 @@
-reward:
-    discount_rate: 0.99
-    calculation_smoothness: 30
-    fnn: [2, 2, 2]

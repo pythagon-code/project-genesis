@@ -19,6 +19,6 @@ __pycache__/
 /logs/
 /models/
 
-# Use these directories for experimental testing and saving
+# Use these directories for experimental testing
 /dev/
 /temp/

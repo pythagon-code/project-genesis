@@ -1,16 +1,20 @@
-[tool.poetry]
-name = "project_genesis"
+[project]
+name = "maci"
 version = "0.1.0"
 description = "Will add later."
-authors = ["Abhay Pokhriyal <abhaypokh89@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+dynamic = ["dependencies", "requires-python"]
 
-[[tool.poetry.packages]]
-include = "project_genesis"
+[[project.authors]]
+name = "Abhay Pokhriyal"
+email = "abhaypokh89@gmail.com"
+
+[[project.packages]]
+include = "maci"
 from = "src"
 
-[tool.poetry.urls]
+[project.urls]
 repository = "https://github.com/pythagon-code/project-genesis"
 
 [[tool.poetry.source]]
@@ -19,18 +23,18 @@ url = "https://download.pytorch.org/whl/cu128"
 priority = "explicit"
 
 [tool.poetry.dependencies]
-poetry-core = "==2.1.3"
+poetry-core = "==2.2.1"
 python = ">=3.12,<3.14"
-pyyaml = "^6.0.2"
-nltk = "^3.9.1"
-numpy = "^2.3.2"
-torch = {version = "^2.8.0", source = "pytorch-cu128"}
-transformers = "^4.55.2"
-tqdm = "^4.67.1"
+pyyaml = "6.0.3"
+nltk = "3.6.7"
+numpy = "2.3.3"
+torch = {version = "2.8.0", source = "pytorch-cu128"}
+transformers = "4.30.2"
+tqdm = "4.67.1"
 
-[tool.poetry.group.test.dependencies]
-pytest = "^8.4.1"
+[project.group.test.dependencies]
+pytest = "8.4.2"
 
 [build-system]
-requires = ["poetry-core==2.1.3"]
+requires = ["poetry-core==2.2.1"]
 build-backend = "poetry.core.masonry.api"

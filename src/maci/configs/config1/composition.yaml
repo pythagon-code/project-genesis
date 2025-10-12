@@ -1,0 +1,6 @@
+composition:
+    attention:
+        encoding: 2
+        num_heads: 4
+    pre_fnn: [2, 2, 2]
+    post_fnn: [2, 2, 2]
