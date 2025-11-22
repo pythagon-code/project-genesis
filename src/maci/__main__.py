@@ -1,9 +1,15 @@
 from .core.cerebrum import Cerebrum
+from .nn.composition import Composition
 
 
 def main() -> None:
-    cerebrum = Cerebrum()
-    cerebrum.run()
+    lst = []
+
+    for i in range(1):
+        lst.append(Composition(10, {}))
+
+    #cerebrum = Cerebrum()
+    #cerebrum.run()
 
 
 if __name__ == "__main__":

@@ -15,6 +15,10 @@ class Composition(nn.Module):
         self.fnn = Fnn([4096, 4096, 4096])
         self.attn_weights: Optional[torch.Tensor] = None
 
+        self.forward(torch.zeros(1, 4096))
+        print(sum(p.numel() for p in self.fnn.parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.multiheaded_attn.parameters() if p.requires_grad))
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         q = self.q_network(x)
