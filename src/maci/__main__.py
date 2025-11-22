@@ -1,5 +1,4 @@
 from .core.cerebrum import Cerebrum
-from .nn.composition import Composition
 
 
 def main() -> None:
