@@ -16,7 +16,7 @@ class FNN(nn.Module):
             layers.pop()
             layers.pop()
 
-        self.fnn = nn.Sequential(*layers)
+        self.fc = nn.Sequential(*layers)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.fnn(x)
+        return self.fc(x)

@@ -1,5 +1,4 @@
 import numpy as np
-from pathlib import Path
 from persistent_array import PersistentArray
 
 
@@ -53,6 +52,5 @@ class MemoryStateBuffer:
 
     def get(self, steps: np.ndarray) -> np.ndarray:
         indices = steps - self._main_offset_step
-        print(indices, self._main_offset_step)
         assert ((indices >= 0) & (indices < self._max_length)).all()
         return self._main_buffer.get(indices)
