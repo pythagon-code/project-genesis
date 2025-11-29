@@ -1,45 +1,40 @@
 import numpy as np
-from persistent_array import PersistentArray
-from memory_state_buffer import MemoryStateBuffer
-
+from typing import Any
+from pathlib import Path
 
 class ReplayBuffer:
     def __init__(
             self,
-            state_buffer: MemoryStateBuffer,
-            main_filename: str,
-            backup_filename: str,
+            filename: str,
             item_size: int,
             max_length: int,
             dtype: type,
             sample_size: int,
             rng: np.random.Generator
         ) -> None:
-        self._memory_state_buffer = state_buffer
-        self._main_buffer = PersistentArray(main_filename, item_size, max_length, dtype, sample_size, rng)
-        self._backup_buffer = PersistentArray(backup_filename, item_size, max_length, dtype, sample_size, rng)
+        self._max_length = max_length
+        self._length = self._end = 0
+        self._sample_size = sample_size
+        self._rng = rng
+        
+        file_path = Path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.touch(exist_ok=False)
+            np.save(file_path, np.zeros(shape=(max_length, item_size), dtype=dtype))
 
+        self._array = np.memmap(filename, shape=(max_length, item_size), dtype=dtype, mode="r+")
+    
 
-    def push(self, item: np.ndarray, step: int) -> None:
-        item[-1] = step
-        self._main_buffer.push(item)
-        self._backup_buffer.push(item)
-
-
-    def cycle_if_necessary(self) -> None:
-        if self._memory_state_buffer.just_cycled():
-            tmp = self._main_buffer
-            self._main_buffer = self._backup_buffer
-            self._backup_buffer = tmp
-            self._backup_buffer.reset()
+    def push(self, item: np.ndarray):
+        self._array[self._end, :] = item
+        self._end = (self._end + 1) % self._max_length
+        self._length = min(self._length + 1, self._max_length)
 
 
     def flush(self) -> None:
-        self._main_buffer.flush()
-        self._backup_buffer.flush()
+        self._array.flush()
     
 
-    def sample(self) -> tuple[np.ndarray, np.ndarray]:
-        sample = self._main_buffer.sample()
-        sample_memory_states = self._memory_state_buffer.get(sample[:, -1].astype(int))
-        return sample[:-1], sample_memory_states
+    def sample(self) -> np.ndarray:
+        return self._rng.choice(self._array[:self._length], min(self._length, self._sample_size))

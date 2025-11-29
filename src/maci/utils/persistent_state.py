@@ -3,8 +3,8 @@ from pathlib import Path
 import torch
 from torch import nn, optim
 
-T = TypeVar("T", bound=nn.Module | optim.Optimizer)
 
+T = TypeVar("T", bound=nn.Module | optim.Optimizer)
 class PersistentState(Generic[T]):
     def __init__(self, filename: str, containers: list[T], device: str) -> None:
         self._containers = containers
