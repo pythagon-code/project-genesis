@@ -21,7 +21,7 @@ class ReplayBuffer:
         if not file_path.exists() or not file_path.is_file():
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.touch(exist_ok=False)
-            np.save(file_path, np.zeros(shape=(max_length, item_size), dtype=dtype))
+            np.save(file_path, np.empty(shape=(max_length, item_size), dtype=dtype))
 
         self._array = np.memmap(filename, shape=(max_length, item_size), dtype=dtype, mode="r+")
     
