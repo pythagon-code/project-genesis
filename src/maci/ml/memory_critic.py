@@ -12,7 +12,7 @@ from .fnn import FNN
 
 
 class ActorCritic(nn.Module):
-    def __init__(self, config: dict[str, Any], rng: Generator) -> None:
+    def __init__(self, config: dict[str, Any], device: str, rng: Generator) -> None:
         super().__init__()
 
         actor_critic_config = config["architecture"]["actor_critic"]
@@ -34,7 +34,14 @@ class ActorCritic(nn.Module):
         self._actor_loss_ema = self._critic_loss_ema = 0.
         self._actor_loss_emv = self._critic_loss_emv = 1.
 
+        self._hidden = tuple(
+            torch.zeros(lstm_config["num_layers"], 1, lstm_config["hidden_size"], device=device) for _ in range(2)
+        )
         self._rng = rng
+
+
+    def reset_hidden(self) -> None:
+        self._hidden = tuple(torch.zeros_like(self._hidden[0]) for _ in range(2))
 
 
     def forward(
@@ -42,12 +49,12 @@ class ActorCritic(nn.Module):
         hidden: tuple[torch.Tensor, torch.Tensor],
         states: torch.Tensor,
         actions: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, list[torch.Tensor] | None]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         stem_out = self._stem(states)
-        lstm_out, next_hidden = self._lstm(stem_out, hidden)
+        lstm_out, _ = self._lstm(stem_out, hidden)
         actor_out = self._actor(lstm_out)
         critics_out = self._critic(torch.cat([lstm_out, actions], dim=-1))
-        return next_hidden, actor_out, critics_out
+        return lstm_out, actor_out, critics_out
 
 
     def _standardize_losses(
@@ -72,22 +79,20 @@ class ActorCritic(nn.Module):
         self,
         hidden: tuple[torch.Tensor, torch.Tensor],
         all_states: torch.Tensor,
-        cont_actions: torch.Tensor,
+        all_cont_actions: torch.Tensor,
         disc_actions: torch.Tensor,
         rewards: torch.Tensor,
         target: ActorCritic
     ):
-        states, next_states = all_states[:-1], all_states[1:]
-        _, actor_out, critic_out = self(hidden, states, cont_actions)
-        actor_out = torch.cat([actor_out, torch.empty_like(actor_out[[0]])])
-        _, _, all_q_values = target(hidden, all_states, actor_out)
-        q_values, next_q_values = all_q_values[:-1], all_q_values[1:]
+        _, actor_out, critic_out = self(hidden, all_states, all_cont_actions)
+        lstm_out, stable_actions, stable_q_values = target(hidden, all_states, actor_out)
 
-        actor_loss = -torch.mean(q_values)
+        actor_loss = -torch.mean(stable_q_values)
 
+        next_q_values = target._critic(torch.cat([lstm_out[1:], stable_actions[1:]], dim=-1))
         max_next_q_values = torch.max(next_q_values, dim=-1, keepdim=True).values.detach()
         target_q_values = rewards + self._discount_rate * max_next_q_values
-        predicted_q_values = critic_out.gather(dim=-1, index=disc_actions)
+        predicted_q_values = critic_out[:-1].gather(dim=-1, index=disc_actions)
         critic_loss = mse_loss(predicted_q_values, target_q_values)
 
         actor_loss, critic_loss = self._standardize_losses(actor_loss, critic_loss)
@@ -97,13 +102,12 @@ class ActorCritic(nn.Module):
 
     def select_action(
         self,
-        hidden: tuple[torch.Tensor, torch.Tensor],
         state: torch.Tensor,
         epsilon: float=0.,
         gaussian_noise: float=0.
     ) -> tuple[torch.Tensor, torch.Tensor]:
         stem_out = self._stem(state)
-        lstm_out, _ = self._lstm(stem_out, hidden)
+        lstm_out, self._hidden = self._lstm(stem_out, self._hidden)
         actor_out = self._actor(stem_out)
 
         cont_action = actor_out + gaussian_noise * torch.randn_like(actor_out)
@@ -122,7 +126,7 @@ if __name__ == "__main__":
     from ..utils.config import get_config
     print("hello")
     cfg = get_config("configs/6x6")
-    ac = ActorCritic(cfg, default_rng(1)).to("cuda")
+    ac = ActorCritic(cfg, "cuda", default_rng(1)).to("cuda")
     opt = optim.Adam(ac.parameters(), lr=1e-3)
     print(ac)
     start = time()
@@ -131,9 +135,9 @@ if __name__ == "__main__":
         opt.zero_grad()
 
         ac.compute_loss(
-            hidden,
+            ac._hidden,
             torch.randn(7, 32, 500, device="cuda"),
-            torch.randn(6, 32, 500, device="cuda"),
+            torch.randn(7, 32, 500, device="cuda"),
             torch.ones(6, 32, 1, dtype=torch.long, device="cuda"),
             torch.randn(6, 32, 1, device="cuda"),
             ac
