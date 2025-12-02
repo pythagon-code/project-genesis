@@ -132,25 +132,49 @@ if __name__ == "__main__":
     from time import time
     from tqdm import tqdm
     from ..utils.config import get_config
+    import numpy as np
     print("hello")
     cfg = get_config("configs/6x6")
     ac = ActorCritic(cfg, "cuda", default_rng(1)).to("cuda")
+    new_state_dict = {}
+    for k, v in ac.state_dict().items():
+        v_arr = v.cpu().numpy()
+        arr = np.memmap(f".cache/ac-{k}.npy", dtype=np.float32, mode="w+", shape=v_arr.shape)
+        arr[:] = v_arr[:]
+        new_state_dict[k] = torch.from_numpy(arr).to(v.device)
+
+    ac.load_state_dict(new_state_dict)
+
     opt = optim.Adam(ac.parameters(), lr=1e-3)
     print(ac)
     start = time()
     #hidden = torch.zeros(3, 32, 1000, device="cuda"), torch.zeros(3, 32, 1000, device="cuda")
-    for i in tqdm(range(1000)):
+    for i in tqdm(range(100)):
         opt.zero_grad()
         loss = ac.compute_loss(
             tuple(torch.randn(3, 32, 1000, device="cuda") for _ in range(2)),
             torch.randn(7, 32, 500, device="cuda"),
             torch.randn(6, 32, 500, device="cuda"),
-            torch.ones(6, 32, 1, dtype=torch.long, device="cuda"),
+            torch.ones(6, 32, 1, dtype=torch.int32, device="cuda"),
             torch.randn(6, 32, 1, device="cuda"),
             ac
         )
         loss.backward()
         opt.step()
         ac.select_action(torch.randn(1, 500, device="cuda"))
+    ac = []
+    for _ in tqdm(range(64)):
+        ac.append(ActorCritic(cfg, "cpu", default_rng(1)))
+        loss = ac[-1].compute_loss(
+            tuple(torch.randn(3, 32, 1000) for _ in range(2)),
+            torch.randn(7, 32, 500),
+            torch.randn(6, 32, 500),
+            torch.ones(6, 32, 1, dtype=torch.int32),
+            torch.randn(6, 32, 1),
+            ac[-1]
+        )
+        loss.backward()
+        opt.step()
+        #torch.save(ac.state_dict(), ".cache/ac.pt")
 
     print(time() - start)
