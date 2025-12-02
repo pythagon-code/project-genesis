@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from math import sqrt
 from numpy.random import Generator, default_rng
 import torch
@@ -26,6 +25,9 @@ class ActorCritic(nn.Module):
         )
         self._actor = FNN(actor_critic_config["actor_fnn"], end=True)
         self._critic = FNN(actor_critic_config["critic_fnn"], end=True)
+        self._frozen_critic = FNN(actor_critic_config["critic_fnn"], end=True)
+        for param in self._frozen_critic.parameters():
+            param.requires_grad_(False)
 
         self._discount_rate: float = config["system"]["discount_rate"]
         self._loss_emv_factor: float = config["optimization"]["loss_emv_factor"]
@@ -34,30 +36,31 @@ class ActorCritic(nn.Module):
         self._actor_loss_ema = self._critic_loss_ema = 0.
         self._actor_loss_emv = self._critic_loss_emv = 1.
 
-        self._hidden = tuple(
-            torch.zeros(lstm_config["num_layers"], 1, lstm_config["hidden_size"], device=device) for _ in range(2)
+        self._hidden_state = tuple(
+            torch.zeros(lstm_config["num_layers"], lstm_config["hidden_size"], device=device) for _ in range(2)
         )
         self._rng = rng
 
 
-    def reset_hidden(self) -> None:
-        self._hidden = tuple(torch.zeros_like(self._hidden[0]) for _ in range(2))
+    def reset_hidden_state(self) -> None:
+        self._hidden_state = tuple(torch.zeros_like(self._hidden_state[0]) for _ in range(2))
 
 
     def forward(
         self,
-        hidden: tuple[torch.Tensor, torch.Tensor],
+        hidden_state: tuple[torch.Tensor, torch.Tensor],
         states: torch.Tensor,
-        actions: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        critic_frozen: bool=False
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         stem_out = self._stem(states)
-        lstm_out, _ = self._lstm(stem_out, hidden)
+        lstm_out, _ = self._lstm(stem_out, hidden_state)
         actor_out = self._actor(lstm_out)
-        critics_out = self._critic(torch.cat([lstm_out, actions], dim=-1))
-        return lstm_out, actor_out, critics_out
+        critic = self._frozen_critic if critic_frozen else self._critic
+        critic_out = critic(torch.cat([lstm_out, actor_out], dim=-1))
+        return lstm_out, critic_out
 
 
-    def _standardize_losses(
+    def _harmonize_losses(
         self,
         actor_loss: torch.Tensor,
         critic_loss: torch.Tensor
@@ -74,28 +77,31 @@ class ActorCritic(nn.Module):
 
         return actor_loss, critic_loss
 
-
     def compute_loss(
         self,
-        hidden: tuple[torch.Tensor, torch.Tensor],
+        hidden_states: tuple[torch.Tensor, torch.Tensor],
         all_states: torch.Tensor,
-        all_cont_actions: torch.Tensor,
+        cont_actions: torch.Tensor,
         disc_actions: torch.Tensor,
         rewards: torch.Tensor,
         target: ActorCritic
     ):
-        _, actor_out, critic_out = self(hidden, all_states, all_cont_actions)
-        lstm_out, stable_actions, stable_q_values = target(hidden, all_states, actor_out)
+        self._frozen_critic.load_state_dict(self._critic.state_dict())
 
-        actor_loss = -torch.mean(stable_q_values)
+        lstm_out, all_q_values = self(hidden_states, all_states, critic_frozen=True)
+        actor_loss = -torch.mean(all_q_values)
 
-        next_q_values = target._critic(torch.cat([lstm_out[1:], stable_actions[1:]], dim=-1))
-        max_next_q_values = torch.max(next_q_values, dim=-1, keepdim=True).values.detach()
+        with torch.no_grad():
+            _, all_stable_q_values = target(hidden_states, all_states)
+        next_q_values = all_stable_q_values[:-1]
+        max_next_q_values = torch.max(next_q_values, dim=-1, keepdim=True).values
         target_q_values = rewards + self._discount_rate * max_next_q_values
-        predicted_q_values = critic_out[:-1].gather(dim=-1, index=disc_actions)
+
+        q_values = self._critic(torch.cat([lstm_out[:-1], cont_actions], dim=-1))
+        predicted_q_values = q_values.gather(dim=-1, index=disc_actions)
         critic_loss = mse_loss(predicted_q_values, target_q_values)
 
-        actor_loss, critic_loss = self._standardize_losses(actor_loss, critic_loss)
+        actor_loss, critic_loss = self._harmonize_losses(actor_loss, critic_loss)
 
         return actor_loss + self._critic_loss_weight * critic_loss
 
@@ -106,21 +112,23 @@ class ActorCritic(nn.Module):
         epsilon: float=0.,
         gaussian_noise: float=0.
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        stem_out = self._stem(state)
-        lstm_out, self._hidden = self._lstm(stem_out, self._hidden)
-        actor_out = self._actor(stem_out)
+        with torch.no_grad():
+            stem_out = self._stem(state)
+            lstm_out, self._hidden_state = self._lstm(stem_out, self._hidden_state)
+            actor_out = self._actor(stem_out)
 
-        cont_action = actor_out + gaussian_noise * torch.randn_like(actor_out)
-        if self._rng.random() < epsilon:
-            disc_action = self._rng.integers(0, 2)
-        else:
-            critic_out = self._critic(torch.cat([lstm_out, cont_action], dim=-1))
-            disc_action = torch.argmax(critic_out, dim=-1)
+            cont_action = actor_out + gaussian_noise * torch.randn_like(actor_out)
+            if self._rng.random() < epsilon:
+                disc_action = self._rng.integers(0, 2)
+            else:
+                critic_out = self._critic(torch.cat([lstm_out, cont_action], dim=-1))
+                disc_action = torch.argmax(critic_out, dim=-1)
 
-        return cont_action, disc_action
+            return cont_action, disc_action
 
 
 if __name__ == "__main__":
+    torch.manual_seed(1)
     from time import time
     from tqdm import tqdm
     from ..utils.config import get_config
@@ -130,19 +138,19 @@ if __name__ == "__main__":
     opt = optim.Adam(ac.parameters(), lr=1e-3)
     print(ac)
     start = time()
-    hidden = torch.zeros(3, 32, 1500, device="cuda"), torch.zeros(3, 32, 1500, device="cuda")
+    #hidden = torch.zeros(3, 32, 1000, device="cuda"), torch.zeros(3, 32, 1000, device="cuda")
     for i in tqdm(range(1000)):
         opt.zero_grad()
-
-        ac.compute_loss(
-            ac._hidden,
+        loss = ac.compute_loss(
+            tuple(torch.randn(3, 32, 1000, device="cuda") for _ in range(2)),
             torch.randn(7, 32, 500, device="cuda"),
-            torch.randn(7, 32, 500, device="cuda"),
+            torch.randn(6, 32, 500, device="cuda"),
             torch.ones(6, 32, 1, dtype=torch.long, device="cuda"),
             torch.randn(6, 32, 1, device="cuda"),
             ac
-        ).backward()
-
+        )
+        loss.backward()
         opt.step()
+        ac.select_action(torch.randn(1, 500, device="cuda"))
 
     print(time() - start)

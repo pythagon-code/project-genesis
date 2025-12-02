@@ -3,14 +3,16 @@ from torch import nn
 
 
 class FNN(nn.Module):
-    def __init__(self, hidden_sizes: list[int], end: bool=False) -> None:
+    def __init__(self, sizes: list[int], end: bool=False) -> None:
         super().__init__()
 
         layers = []
-        for x in hidden_sizes:
-            layers.append(nn.LazyLinear(x))
-            layers.append(nn.LayerNorm(x))
+        prev_size = sizes[0]
+        for curr_size in sizes[1:]:
+            layers.append(nn.Linear(prev_size, curr_size))
+            layers.append(nn.LayerNorm(curr_size))
             layers.append(nn.LeakyReLU())
+            prev_size = curr_size
 
         if end:
             layers.pop()
