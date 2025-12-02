@@ -65,15 +65,15 @@ class ActorCritic(nn.Module):
         actor_loss: torch.Tensor,
         critic_loss: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        self._actor_loss_ema = get_ema(self._actor_loss_ema, actor_loss.item(), self._loss_emv_factor)
-        actor_loss_sqr_diff = (actor_loss.item() - self._actor_loss_ema) ** 2
-        self._actor_loss_emv = get_ema(self._actor_loss_emv, actor_loss_sqr_diff, self._loss_emv_factor)
-        actor_loss /= sqrt(self._actor_loss_emv)
-
-        self._critic_loss_ema = get_ema(self._critic_loss_ema, critic_loss.item(), self._loss_emv_factor)
-        critic_loss_sqr_diff = (critic_loss.item() - self._critic_loss_ema) ** 2
-        self._critic_loss_emv = get_ema(self._critic_loss_emv, critic_loss_sqr_diff, self._loss_emv_factor)
-        critic_loss /= sqrt(self._critic_loss_emv)
+        # self._actor_loss_ema = get_ema(self._actor_loss_ema, actor_loss.item(), self._loss_emv_factor)
+        # actor_loss_sqr_diff = (actor_loss.item() - self._actor_loss_ema) ** 2
+        # self._actor_loss_emv = get_ema(self._actor_loss_emv, actor_loss_sqr_diff, self._loss_emv_factor)
+        # actor_loss /= sqrt(self._actor_loss_emv)
+        #
+        # self._critic_loss_ema = get_ema(self._critic_loss_ema, critic_loss.item(), self._loss_emv_factor)
+        # critic_loss_sqr_diff = (critic_loss.item() - self._critic_loss_ema) ** 2
+        # self._critic_loss_emv = get_ema(self._critic_loss_emv, critic_loss_sqr_diff, self._loss_emv_factor)
+        # critic_loss /= sqrt(self._critic_loss_emv)
 
         return actor_loss, critic_loss
 
@@ -130,26 +130,26 @@ class ActorCritic(nn.Module):
 if __name__ == "__main__":
     torch.manual_seed(1)
     from time import time
-    from tqdm import tqdm
+    from tqdm import tqdm, trange
     from ..utils.config import get_config
     import numpy as np
     print("hello")
     cfg = get_config("configs/6x6")
     ac = ActorCritic(cfg, "cuda", default_rng(1)).to("cuda")
     new_state_dict = {}
-    for k, v in ac.state_dict().items():
+    arr = {}
+    ac_state_dict = ac.state_dict()
+    for k, v in ac.state_dict().copy().items():
         v_arr = v.cpu().numpy()
-        arr = np.memmap(f".cache/ac-{k}.npy", dtype=np.float32, mode="w+", shape=v_arr.shape)
-        arr[:] = v_arr[:]
-        new_state_dict[k] = torch.from_numpy(arr).to(v.device)
-
+        arr[k] = np.memmap(f".cache/params/ac-{k}.npy", dtype=np.float32, mode="r+", shape=v_arr.shape)
+        new_state_dict[k] = torch.from_numpy(arr[k]).to(v.device)
     ac.load_state_dict(new_state_dict)
+    print(arr)
 
     opt = optim.Adam(ac.parameters(), lr=1e-3)
-    print(ac)
     start = time()
     #hidden = torch.zeros(3, 32, 1000, device="cuda"), torch.zeros(3, 32, 1000, device="cuda")
-    for i in tqdm(range(100)):
+    for i in trange(100):
         opt.zero_grad()
         loss = ac.compute_loss(
             tuple(torch.randn(3, 32, 1000, device="cuda") for _ in range(2)),
@@ -161,20 +161,15 @@ if __name__ == "__main__":
         )
         loss.backward()
         opt.step()
+        print(loss)
         ac.select_action(torch.randn(1, 500, device="cuda"))
-    ac = []
-    for _ in tqdm(range(64)):
-        ac.append(ActorCritic(cfg, "cpu", default_rng(1)))
-        loss = ac[-1].compute_loss(
-            tuple(torch.randn(3, 32, 1000) for _ in range(2)),
-            torch.randn(7, 32, 500),
-            torch.randn(6, 32, 500),
-            torch.ones(6, 32, 1, dtype=torch.int32),
-            torch.randn(6, 32, 1),
-            ac[-1]
-        )
-        loss.backward()
-        opt.step()
-        #torch.save(ac.state_dict(), ".cache/ac.pt")
+
+        for k, v in ac.state_dict().copy().items():
+            v_arr = v.cpu().numpy()
+            arr[k][:] = v_arr[:]
+            new_state_dict[k] = torch.from_numpy(arr[k]).to(v.device)
+
+        ac.load_state_dict(new_state_dict)
+
 
     print(time() - start)
