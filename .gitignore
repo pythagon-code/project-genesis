@@ -16,15 +16,11 @@ __pycache__/
 /dist/
 
 # Model cache
-/.cache/
+/.model/
 
-# Program input
-/configs/
-
-# Program output
+# Program logs
 /logs/
-/models/
 
-# Use these directories for experiments
+# Use these directories for local runs or tests
 /dev/
 /temp/

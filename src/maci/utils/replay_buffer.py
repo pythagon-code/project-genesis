@@ -23,7 +23,7 @@ class ReplayBuffer:
             file_path.touch(exist_ok=False)
             np.save(file_path, np.empty(shape=(max_length, item_size), dtype=dtype))
 
-        self._array = np.memmap(filename, shape=(max_length, item_size), dtype=dtype, mode="r+")
+        self._array = np.memmap(filename, dtype=dtype, mode="r+", shape=(max_length, item_size))
     
 
     def push(self, item: np.ndarray):
