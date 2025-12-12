@@ -12,11 +12,8 @@ system:
         final: 0.25
         decay_rate: 0.999
     gaussian_noise:
-        initial: 0.02
-        final: 0.0001
+        initial: 1e-2
+        final: 1e-4
         decay_rate: 0.999
-    reward_clamp: 100
-    reward_penalty_factor: 1.5
     memory_dim: 1000
-    critic_memory_loss_ratio: 1.25
-    discount_rate: 0.9
+    discount_rate: 0.95

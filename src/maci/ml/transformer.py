@@ -35,7 +35,7 @@ class Transformer(nn.Module):
 if __name__ == "__main__":
     from time import time
     from tqdm import tqdm
-    from ..utils.configs import get_config
+    from ..utils.config import get_config
 
     print("hello")
     cfg = get_config("configs/6x6")["architecture"]

@@ -22,6 +22,7 @@ class ModelOptimizer:
 
         for k, v in model_containers[0].state_dict().items():
             if not v.requires_grad: continue
+            assert k.replace(".", "").isalnum()
             param_path = Path(f"{model_filename}-{k}.npy")
             param_existed = param_path.exists()
             self._model_state[k] = np.memmap(param_path, dtype=dtype, mode="r+", shape=v.shape)
@@ -29,6 +30,7 @@ class ModelOptimizer:
                 self._model_state[k][:] = v.detach().cpu().numpy()
 
         for k, v in opt_containers[0].state_dict().items():
+            assert k.replace(".", "").isalnum()
             param_path = Path(f"{optim_filename}-{k}.npy")
             param_existed = param_path.exists()
             self._opt_state[k] = np.memmap(param_path, dtype=dtype, mode="r+", shape=v.shape)

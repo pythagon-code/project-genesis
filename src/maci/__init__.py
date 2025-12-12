@@ -5,7 +5,7 @@ from logging.handlers import TimedRotatingFileHandler
 if os.path.commonpath([os.getcwd(), __file__]) == os.path.dirname(__file__):
     raise Exception("Do not execute the project inside project directory.")
 
-os.makedirs(".cache/", exist_ok=True)
+os.makedirs(".model/", exist_ok=True)
 os.makedirs("logs/", exist_ok=True)
 
 file_handler = TimedRotatingFileHandler("logs/maci.log", when='midnight', backupCount=7)

@@ -1,15 +1,15 @@
 optimization:
     learning_rate: 1e-3
-    batch_size: 64
+    batch_size:
+        regular: 32
+        sequence: 8
     update_count: 2
     subset_count: 4
     replay_buffer_size: 20000
-    replay_buffer_append_freq: 0.25
-    memory_state_buffer_size: 10000
     polyak_factor:
         initial: 0.1
-        final: 0.0005
+        final: 5e-4
         decay_rate: 0.997
-    critic_loss_weight: 1.5
+    critic_loss_weight: 1.75
     loss_emv_factor: 0.001
-    rollout: 6
+    truncation_length: 6

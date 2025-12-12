@@ -65,15 +65,15 @@ class ActorCritic(nn.Module):
         actor_loss: torch.Tensor,
         critic_loss: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        # self._actor_loss_ema = get_ema(self._actor_loss_ema, actor_loss.item(), self._loss_emv_factor)
-        # actor_loss_sqr_diff = (actor_loss.item() - self._actor_loss_ema) ** 2
-        # self._actor_loss_emv = get_ema(self._actor_loss_emv, actor_loss_sqr_diff, self._loss_emv_factor)
-        # actor_loss /= sqrt(self._actor_loss_emv)
-        #
-        # self._critic_loss_ema = get_ema(self._critic_loss_ema, critic_loss.item(), self._loss_emv_factor)
-        # critic_loss_sqr_diff = (critic_loss.item() - self._critic_loss_ema) ** 2
-        # self._critic_loss_emv = get_ema(self._critic_loss_emv, critic_loss_sqr_diff, self._loss_emv_factor)
-        # critic_loss /= sqrt(self._critic_loss_emv)
+        self._actor_loss_ema = get_ema(self._actor_loss_ema, actor_loss.item(), self._loss_emv_factor)
+        actor_loss_sqr_diff = (actor_loss.item() - self._actor_loss_ema) ** 2
+        self._actor_loss_emv = get_ema(self._actor_loss_emv, actor_loss_sqr_diff, self._loss_emv_factor)
+        actor_loss /= sqrt(self._actor_loss_emv)
+
+        self._critic_loss_ema = get_ema(self._critic_loss_ema, critic_loss.item(), self._loss_emv_factor)
+        critic_loss_sqr_diff = (critic_loss.item() - self._critic_loss_ema) ** 2
+        self._critic_loss_emv = get_ema(self._critic_loss_emv, critic_loss_sqr_diff, self._loss_emv_factor)
+        critic_loss /= sqrt(self._critic_loss_emv)
 
         return actor_loss, critic_loss
 
