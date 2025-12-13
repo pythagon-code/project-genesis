@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import torch
-from torch import Tensor, nn
+from torch import Tensor
+from torch.nn.functional import mse_loss
 from typing import Any, override
 import warnings
 
-from .fnn import FNN
+from .actor import Actor
 from .transformer import Transformer
 
 warnings.filterwarnings("ignore")
@@ -25,9 +28,18 @@ class Critic(Transformer):
 
     def compute_loss(
         self,
+        target_self: Critic,
         states: Tensor,
         actions: Tensor,
         rewards: Tensor,
-        next_states: Tensor
+        next_states: Tensor,
+        target_actor: Actor
     ) -> Tensor:
-        ...
+        q_values = self(states, actions)
+
+        with torch.no_grad():
+            next_actions = target_actor(next_states)
+            next_q_values = target_self(next_states, next_actions)
+            target_q_values = rewards + self._discount_rate * next_q_values
+
+        return mse_loss(q_values, target_q_values)

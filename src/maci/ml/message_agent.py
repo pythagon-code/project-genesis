@@ -5,7 +5,6 @@ from typing import Any
 import torch
 from torch import Tensor, nn
 from torch.nn.functional import mse_loss
-from transformers.models import opt
 
 from ..utils.ema import get_ema_and_emv
 from .actor import Actor
@@ -138,15 +137,15 @@ if __name__ == "__main__":
     start = time()
     for i in trange(5000):
         agent.compute_loss(
-            tuple(torch.randn(3, 16, 256, device="cuda") for _ in range(2)),
-            torch.randn(7, 16, 128, device="cuda"),
+            tuple(torch.randn(3, 16, 4, device="cuda") for _ in range(2)),
+            torch.randn(7, 16, 2, device="cuda"),
             [dst1, dst2],
-            [tuple(torch.randn(3, 16, 256, device="cuda") for _ in range(2)) for _ in range(2)],
+            [tuple(torch.randn(3, 16, 4, device="cuda") for _ in range(2)) for _ in range(2)],
             actor,
             critic,
-            torch.randn(11, 7 * 16, 128, device="cuda"),
+            torch.randn(11, 7 * 16, 2, device="cuda"),
             torch.randn(1, 7 * 16, 1, device="cuda"),
-            torch.randn(12, 7 * 16, 128, device="cuda")
+            torch.randn(12, 7 * 16, 2, device="cuda")
         ).backward()
         opt.step()
         opt.zero_grad(set_to_none=True)

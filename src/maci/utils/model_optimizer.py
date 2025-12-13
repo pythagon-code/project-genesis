@@ -21,7 +21,6 @@ class ModelOptimizer:
         self._opt_state: dict[str, np.memmap] = {}
 
         for k, v in model_containers[0].state_dict().items():
-            if not v.requires_grad: continue
             assert k.replace(".", "").isalnum()
             param_path = Path(f"{model_filename}-{k}.npy")
             param_existed = param_path.exists()
@@ -51,26 +50,33 @@ class ModelOptimizer:
         return container
 
 
-    def load_regular(self) -> nn.Module:
+    def load_frozen(self) -> nn.Module:
         assert len(self._model_containers) > 0
+
         model = self._load_container(self._model_containers.pop(), self._model_state)
+        for param in model.parameters():
+            param.requires_grad_(False)
+
         return model
 
 
     def load_dirty(self) -> tuple[nn.Module, optim.Optimizer]:
         assert len(self._opt_containers) > 0
+
         model = self._load_container(self._model_containers.pop(), self._model_state)
+        for param in model.parameters():
+            param.requires_grad_(True)
+
         opt = self._load_container(self._opt_containers.pop(), self._opt_state)
         return model, opt
 
 
-    def unload_regular(self, model: nn.Module) -> None:
+    def unload_frozen(self, model: nn.Module) -> None:
         self._model_containers.append(model)
 
 
     def unload_dirty(self, model: nn.Module, opt: optim.Optimizer) -> None:
         for k, v in model.state_dict().items():
-            if not v.requires_grad: continue
             self._model_state[k][:] = v.detach().cpu().numpy()
 
         for k, v in opt.state_dict().items():
