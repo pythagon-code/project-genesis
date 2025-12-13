@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import torch
-from torch import Tensor
+from torch import TYPE_CHECKING, Tensor
 from typing import Any
 
-from .critic import Critic
 from .transformer import Transformer
+
+if TYPE_CHECKING:
+    from .critic import Critic
 
 
 class Actor(Transformer):

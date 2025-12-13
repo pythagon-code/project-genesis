@@ -19,7 +19,6 @@ class Cerebrum:
         self.config = config
         self.neurons = neurons
         self.environmental_buffer = environmental_buffer
-        self.memory_state_buffer = memory_state_buffer
         self.rng = rng
         self.step = step
         self._logger = logging.getLogger(self.__class__.__name__)

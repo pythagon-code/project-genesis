@@ -5,19 +5,19 @@ architecture:
             input_size: 2
             hidden_size: 4
             num_layers: 3
-        head_fnn: [ 4, 4, 4, 2 ]
+        head_fnn: [ 4, 32, 32, 2 ]
     routing_agent_fnn: [ 1, 2, 2, 2, 3, 3 ]
     actor:
         stem_fnn: [ 2, 2 ]
-        qkv_fnn: [ 2, 4, 8, 8 ]
+        qkv_fnn: [ 2, 32, 64, 8 ]
         attention:
             embed_dim: 8
             num_heads: 8
-        out_fnn: [ 8, 8, 4, 2, 2 ]
+        out_fnn: [ 8, 64, 64, 32, 2 ]
     critic:
         stem_fnn: [ 4, 4 ]
-        qkv_fnn: [ 4, 4, 8, 8 ]
+        qkv_fnn: [ 4, 32, 64, 8 ]
         attention:
             embed_dim: 8
             num_heads: 8
-        out_fnn: [ 8, 8, 4, 2, 2 ]
+        out_fnn: [ 8, 64, 64, 32, 1 ]

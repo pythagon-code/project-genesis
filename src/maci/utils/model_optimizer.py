@@ -1,8 +1,7 @@
 from collections import deque
-import numpy as np
-from pathlib import Path
-import torch
 from torch import nn, optim
+
+from .mmap_object import MMapObject
 
 
 class ModelOptimizer:
@@ -10,52 +9,23 @@ class ModelOptimizer:
         self,
         model_filename: str,
         optim_filename: str,
-        model_containers: deque[nn.Module],
+        frozen_model_containers: deque[nn.Module],
+        dirty_model_containers: deque[nn.Module],
         opt_containers: deque[optim.Optimizer],
-        dtype: np.dtype
     ) -> None:
-        self._model_containers = model_containers
+        self._frozen_model_containers = frozen_model_containers
+        self._dirty_model_containers = dirty_model_containers
         self._opt_containers = opt_containers
 
-        self._model_state: dict[str, np.memmap] = {}
-        self._opt_state: dict[str, np.memmap] = {}
-
-        for k, v in model_containers[0].state_dict().items():
-            assert k.replace(".", "").isalnum()
-            param_path = Path(f"{model_filename}-{k}.npy")
-            param_existed = param_path.exists()
-            self._model_state[k] = np.memmap(param_path, dtype=dtype, mode="r+", shape=v.shape)
-            if not param_existed:
-                self._model_state[k][:] = v.detach().cpu().numpy()
-
-        for k, v in opt_containers[0].state_dict().items():
-            assert k.replace(".", "").isalnum()
-            param_path = Path(f"{optim_filename}-{k}.npy")
-            param_existed = param_path.exists()
-            self._opt_state[k] = np.memmap(param_path, dtype=dtype, mode="r+", shape=v.shape)
-            if not param_existed:
-                self._opt_state[k][:] = v.detach().cpu().numpy()
-
-
-    @staticmethod
-    def _load_container(
-        container: nn.Module | optim.Optimizer,
-        state: dict[str, np.memmap]
-    ) -> nn.Module | optim.Optimizer:
-        state_dict = {}
-        for k, v in state.items():
-            state_dict[k] = torch.from_numpy(v)
-
-        container.load_state_dict(state_dict, strict=isinstance(container, optim.Optimizer))
-        return container
+        self._model_state = MMapObject(self._frozen_model_containers[0].state_dict(), model_filename)
+        self._opt_state = MMapObject(self._opt_containers[0].state_dict(), optim_filename)
 
 
     def load_frozen(self) -> nn.Module:
-        assert len(self._model_containers) > 0
+        assert len(self._frozen_model_containers) > 0
 
-        model = self._load_container(self._model_containers.pop(), self._model_state)
-        for param in model.parameters():
-            param.requires_grad_(False)
+        model = self._frozen_model_containers.pop()
+        model.load_state_dict(self._model_state.load_object())
 
         return model
 
@@ -63,32 +33,27 @@ class ModelOptimizer:
     def load_dirty(self) -> tuple[nn.Module, optim.Optimizer]:
         assert len(self._opt_containers) > 0
 
-        model = self._load_container(self._model_containers.pop(), self._model_state)
-        for param in model.parameters():
-            param.requires_grad_(True)
+        model = self._dirty_model_containers.pop()
+        model.load_state_dict(self._model_state.load_object())
 
-        opt = self._load_container(self._opt_containers.pop(), self._opt_state)
+        opt = self._opt_containers.pop()
+        opt.load_state_dict(self._opt_state.load_object())
+
         return model, opt
 
 
     def unload_frozen(self, model: nn.Module) -> None:
-        self._model_containers.append(model)
+        self._frozen_model_containers.append(model)
 
 
     def unload_dirty(self, model: nn.Module, opt: optim.Optimizer) -> None:
-        for k, v in model.state_dict().items():
-            self._model_state[k][:] = v.detach().cpu().numpy()
+        self._model_state.unload_object(model.state_dict())
+        self._dirty_model_containers.append(model)
 
-        for k, v in opt.state_dict().items():
-            self._opt_state[k][:] = v.detach().cpu().numpy()
-
-        self._model_containers.append(model)
+        self._opt_state.unload_object(opt.state_dict())
         self._opt_containers.append(opt)
 
 
-    def flush(self) -> None:
-        for v in self._model_state.values():
-            v.flush()
-
-        for v in self._opt_state.values():
-            v.flush()
+    def flush(self):
+        self._model_state.flush()
+        self._opt_state.flush()

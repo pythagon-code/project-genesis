@@ -1,10 +1,9 @@
 import torch
 from torch import nn
-from typing import override
 
 
 class FNN(nn.Module):
-    def __init__(self, sizes: list[int], end: bool=False) -> None:
+    def __init__(self, sizes: list[int], output: bool=False) -> None:
         super().__init__()
 
         layers = []
@@ -15,7 +14,7 @@ class FNN(nn.Module):
             layers.append(nn.LeakyReLU())
             prev_size = curr_size
 
-        if end:
+        if output:
             layers.pop()
             layers.pop()
 

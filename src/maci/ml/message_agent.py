@@ -107,7 +107,7 @@ class MessageAgent(nn.Module):
             transformer_next_actions = actor(transformer_next_states)
             next_q_values = critic(transformer_next_states, transformer_next_actions)
             target_q_values = transformer_rewards + self._discount_rate * next_q_values
-            target_q_values = target_q_values.repeat_interleave(3, dim=1).squeeze(0)
+            target_q_values = target_q_values.repeat_interleave(3, dim=0).squeeze(0)
 
         critic_loss = mse_loss(q_values, target_q_values)
 
@@ -120,6 +120,9 @@ if __name__ == "__main__":
     from ..utils.config import get_config
     from torch import optim
     from numpy.random import default_rng
+    from ..utils.model_optimizer import ModelOptimizer
+    from collections import deque
+    from numpy import float32
     print("hello")
     cfg = get_config("configs/6x6")
     agent = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
@@ -135,7 +138,7 @@ if __name__ == "__main__":
     opt = optim.Adam(agent.parameters(), lr=1e-3)
     print(agent)
     start = time()
-    for i in trange(5000):
+    for i in trange(100):
         agent.compute_loss(
             tuple(torch.randn(3, 16, 4, device="cuda") for _ in range(2)),
             torch.randn(7, 16, 2, device="cuda"),
@@ -144,11 +147,14 @@ if __name__ == "__main__":
             actor,
             critic,
             torch.randn(11, 7 * 16, 2, device="cuda"),
-            torch.randn(1, 7 * 16, 1, device="cuda"),
+            torch.randn(7 * 16, 1, device="cuda"),
             torch.randn(12, 7 * 16, 2, device="cuda")
         ).backward()
         opt.step()
         opt.zero_grad(set_to_none=True)
+
+    model_opt = ModelOptimizer("dev/test/mod", "dev/test/opt",
+                               deque([agent]), deque([opt]), float32)
 
 
     print(time() - start)

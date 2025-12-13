@@ -1,7 +1,7 @@
-import torch
+from torch import Tensor
 from typing import TypeVar
 
-T = TypeVar("T", bound=torch.Tensor | float)
+T = TypeVar("T", Tensor, float)
 
 
 def get_ema(ema: T, data: T, factor: float) -> T:
