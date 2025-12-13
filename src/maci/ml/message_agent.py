@@ -153,8 +153,7 @@ if __name__ == "__main__":
         opt.step()
         opt.zero_grad(set_to_none=True)
 
-    model_opt = ModelOptimizer("dev/test/mod", "dev/test/opt",
-                               deque([agent]), deque([opt]), float32)
+    model_opt = ModelOptimizer("dev/test/mod", "dev/test/opt", deque([agent]), deque([opt]), float32)
 
 
     print(time() - start)
