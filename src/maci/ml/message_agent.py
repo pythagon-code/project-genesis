@@ -5,6 +5,7 @@ from typing import Any
 import torch
 from torch import Tensor, nn
 from torch.nn.functional import mse_loss
+from transformers.models import opt
 
 from ..utils.ema import get_ema_and_emv
 from .actor import Actor
@@ -12,21 +13,20 @@ from .critic import Critic
 from .fnn import FNN
 
 
-class Agent(nn.Module):
+class MessageAgent(nn.Module):
     def __init__(self, config: dict[str, Any], device: str, rng: Generator) -> None:
         super().__init__()
-        config = config["actor_critic"]
-        actor_critic_config = config["architecture"]["actor_critic"]
-        lstm_config = actor_critic_config["lstm"]
 
-        self._stem = FNN(actor_critic_config["stem_fnn"])
+        message_agent_config = config["architecture"]["message_agent"]
+        lstm_config = message_agent_config["lstm"]
+
+        self._stem = FNN(message_agent_config["stem_fnn"])
         self._lstm = nn.LSTM(
             input_size=lstm_config["input_size"],
             hidden_size=lstm_config["hidden_size"],
             num_layers=lstm_config["num_layers"],
         )
-
-        self._heads = nn.ModuleList(FNN(actor_critic_config["head_fnn"]) for _ in range(3))
+        self._heads = nn.ModuleList(FNN(message_agent_config["head_fnn"]) for _ in range(3))
 
         self._discount_rate: float = config["system"]["discount_rate"]
         self._loss_emv_factor: float = config["optimization"]["loss_emv_factor"]
@@ -43,12 +43,14 @@ class Agent(nn.Module):
 
     def forward(
         self,
-        hidden_states: tuple[Tensor, Tensor],
+        hidden_states: tuple[Tensor, ...],
         states: Tensor,
+        which_heads: list[int] | None=None
     ) -> list[Tensor]:
+        which_heads = which_heads or list(range(3))
         stem_out = self._stem(states)
         lstm_out, _ = self._lstm(stem_out, hidden_states)
-        heads_out = [self._heads[i](lstm_out) for i in range(3)]
+        heads_out = [self._heads[i](lstm_out) for i in which_heads]
         return heads_out
 
 
@@ -80,51 +82,74 @@ class Agent(nn.Module):
     
     def compute_loss(
         self,
-        hidden_states: tuple[Tensor, Tensor],
+        hidden_states: tuple[Tensor, ...],
         states: Tensor,
-        neighbors: list[Agent],
-        neighbors_hidden_states: tuple[Tensor, Tensor],
+        dsts: list[MessageAgent],
+        dsts_hidden_states: list[tuple[Tensor, ...]],
         actor: Actor,
         critic: Critic,
-        actor_critic_states: Tensor,
-        actor_critic_actions: Tensor,
-        actor_critic_rewards: Tensor,
-        actor_critic_next_state_actions: Tensor,
+        transformer_states: Tensor,
+        transformer_rewards: Tensor,
+        transformer_next_states: Tensor,
     ) -> Tensor:
         messages = self(hidden_states, states)
-        neighbors_messages = [neighbors[i](neighbors_hidden_states[i], messages[i]) for i in range(2)]
-        submissions = neighbors_messages + [messages[2]]
+        dsts_messages = [dsts[i](dsts_hidden_states[i], messages[i], [0])[0] for i in range(2)]
+        submissions = [messages[0]] + dsts_messages
 
-        actor_in = [self._append_to_transformer_states(sub, actor_critic_states) for sub in submissions]
-        actor_critic_states = torch.cat(actor_in, dim=1)
-        actor_out = actor(actor_in)
+        transformer_states = [self._append_to_transformer_states(transformer_states, sub) for sub in submissions]
+        transformer_states = torch.cat(transformer_states, dim=1)
+        transformer_actions = actor(transformer_states)
 
-        critic_in = torch.cat([actor_critic_states, actor_out], dim=-1)
-        critic_out = critic(critic_in)
+        q_values = critic(transformer_states, transformer_actions)
 
-        actor_loss = -torch.mean(critic_out)
+        actor_loss = -torch.mean(q_values)
 
-        critic_in = torch.cat([actor_critic_states, actor_critic_actions], dim=-1)
-        q_values = critic(critic_in)
         with torch.no_grad():
-            next_q_values = critic(actor_critic_next_state_actions)
-            target_q_values = actor_critic_rewards + self._discount_rate * next_q_values
+            transformer_next_actions = actor(transformer_next_states)
+            next_q_values = critic(transformer_next_states, transformer_next_actions)
+            target_q_values = transformer_rewards + self._discount_rate * next_q_values
+            target_q_values = target_q_values.repeat_interleave(3, dim=1).squeeze(0)
 
         critic_loss = mse_loss(q_values, target_q_values)
 
         return self._combine_losses(actor_loss, critic_loss)
 
 
-
 if __name__ == "__main__":
     from time import time
-    from tqdm import tqdm
+    from tqdm import trange
     from ..utils.config import get_config
+    from torch import optim
+    from numpy.random import default_rng
     print("hello")
-    cfg = get_config("configs/6x6")["architecture"]
-    ac = ActorCritic(cfg).to("cuda")
-    print(ac)
+    cfg = get_config("configs/6x6")
+    agent = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
+    dst1 = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
+    dst2 = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
+    actor = Actor(cfg).to("cuda")
+    critic = Critic(cfg).to("cuda")
+    for param in dst1.parameters():
+        param.requires_grad_(False)
+    for param in dst2.parameters():
+        param.requires_grad_(False)
+
+    opt = optim.Adam(agent.parameters(), lr=1e-3)
+    print(agent)
     start = time()
-    for i in tqdm(range(5000)):
-        ac(torch.randn((64, 1000), device="cuda"))
+    for i in trange(5000):
+        agent.compute_loss(
+            tuple(torch.randn(3, 16, 256, device="cuda") for _ in range(2)),
+            torch.randn(7, 16, 128, device="cuda"),
+            [dst1, dst2],
+            [tuple(torch.randn(3, 16, 256, device="cuda") for _ in range(2)) for _ in range(2)],
+            actor,
+            critic,
+            torch.randn(11, 7 * 16, 128, device="cuda"),
+            torch.randn(1, 7 * 16, 1, device="cuda"),
+            torch.randn(12, 7 * 16, 128, device="cuda")
+        ).backward()
+        opt.step()
+        opt.zero_grad(set_to_none=True)
+
+
     print(time() - start)

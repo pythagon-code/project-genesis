@@ -1,33 +1,33 @@
+import torch
 from torch import Tensor, nn
-from typing import Any
+from typing import Any, override
+import warnings
 
 from .fnn import FNN
+from .transformer import Transformer
+
+warnings.filterwarnings("ignore")
 
 
-class Critic(nn.Module):
+class Critic(Transformer):
     def __init__(self, config: dict[str, Any]) -> None:
-        super().__init__()
-
-        critic_config = config["critic"]
-        attention_config = critic_config["attention"]
-
-        self.stem = FNN(critic_config["stem_fnn"])
-        self.q = FNN(critic_config["qkv_fnn"])
-        self.k = FNN(critic_config["qkv_fnn"])
-        self.v = FNN(critic_config["qkv_fnn"])
-        self.attention = nn.MultiheadAttention(
-            embed_dim=attention_config["embed_dim"],
-            num_heads=attention_config["num_heads"],
-        )
-        self.out = FNN(critic_config["out_fnn"], end=True)
+        super().__init__(config["architecture"]["critic"])
+        self._discount_rate: float = config["system"]["discount_rate"]
 
 
-    def forward(self, states: Tensor) -> Tensor:
-        stem_out = self.stem(states)
-        q, k, v = self.q(stem_out), self.k(stem_out), self.v(stem_out)
-        attn_out, _ = self.attention(q, k, v)
-        actions = self.out(attn_out)
-        return actions
+    @override
+    def forward(self, states: Tensor, actions: Tensor | None=None) -> Tensor:
+        assert actions is not None
+        actions = actions.unsqueeze(0).expand(states.shape[0], -1, -1)
+        x = torch.cat([states, actions], dim=-1)
+        return super().forward(x, None)
 
 
-    def compute_loss(self, states: Tensor, critic: Critic) -> Tensor:
+    def compute_loss(
+        self,
+        states: Tensor,
+        actions: Tensor,
+        rewards: Tensor,
+        next_states: Tensor
+    ) -> Tensor:
+        ...

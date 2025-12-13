@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from typing import override
 
 
 class FNN(nn.Module):
@@ -19,6 +20,7 @@ class FNN(nn.Module):
             layers.pop()
 
         self.fc = nn.Sequential(*layers)
-        
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.fc(x)

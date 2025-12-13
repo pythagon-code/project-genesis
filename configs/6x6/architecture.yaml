@@ -1,23 +1,23 @@
 architecture:
     message_agent:
-        stem_fnn: [ 100, 100 ]
+        stem_fnn: [ 128, 128 ]
         lstm:
-            input_size: 100
-            hidden_size: 200
+            input_size: 128
+            hidden_size: 256
             num_layers: 3
-        head_fnn: [ 200, 200, 150, 100 ]
-    routing_agent_fnn: [ 100, 100, 100, 64, 32, 3 ]
+        head_fnn: [ 256, 256, 192, 128 ]
+    routing_agent_fnn: [ 128, 128, 128, 64, 32, 3 ]
     actor:
-        stem_fnn: [ 100, 100 ]
-        qkv_fnn: [ 100, 100, 100, 100 ]
+        stem_fnn: [ 128, 256 ]
+        qkv_fnn: [ 256, 512, 512, 1024 ]
         attention:
-            embed_dim: 100
+            embed_dim: 1024
             num_heads: 8
-        out_fnn: [ 800, 800, 600, 400, 200 ]
+        out_fnn: [ 1024, 1024, 512, 256, 256 ]
     critic:
-        stem_fnn: [ 100, 100 ]
-        qkv_fnn: [ 100, 100, 100, 100 ]
+        stem_fnn: [ 384, 384 ]
+        qkv_fnn: [ 384, 512, 512, 1024 ]
         attention:
-            embed_dim: 100
+            embed_dim: 1024
             num_heads: 8
-        out_fnn: [ 800, 800, 600, 400, 200 ]
+        out_fnn: [ 1024, 1024, 512, 256, 256 ]
