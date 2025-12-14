@@ -47,3 +47,8 @@ class ModelOptimizer:
     def flush(self):
         self._model_state.flush()
         self._opt_state.flush()
+
+
+    def close(self):
+        self._model_state.close()
+        self._opt_state.close()
