@@ -18,9 +18,12 @@ __pycache__/
 # Model cache
 /.model/
 
+# Testing cache
+/.test/
+
 # Program logs
 /logs/
 
-# Use these directories for local runs or tests
+# Use these directories for local runs or experiments
 /dev/
 /temp/
