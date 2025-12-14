@@ -7,7 +7,7 @@ T = TypeVar("T")
 
 
 class MMapObject:
-    def __init__(self, obj: T, filename: str, resize_factor: float=1.5) -> None:
+    def __init__(self, filename: str, obj: T, resize_factor: float=1.5) -> None:
         file_path = Path(filename)
         file_existed = file_path.exists()
 
@@ -19,7 +19,6 @@ class MMapObject:
         self._resize_factor = resize_factor
         if not file_existed:
             self.save(obj)
-
 
 
     def load(self) -> T:

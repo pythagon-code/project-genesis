@@ -15,8 +15,8 @@ class ModelOptimizer:
         self._model_containers = model_containers
         self._model_opt_containers = model_opt_containers
 
-        self._model_state = MMapObject(self._model_opt_containers[0][0].state_dict(), model_filename)
-        self._opt_state = MMapObject(self._model_opt_containers[0][1].state_dict(), optim_filename)
+        self._model_state = MMapObject(model_filename, self._model_opt_containers[0][0].state_dict())
+        self._opt_state = MMapObject(optim_filename, self._model_opt_containers[0][1].state_dict())
 
 
     def load_frozen(self) -> nn.Module:

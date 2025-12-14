@@ -16,7 +16,7 @@ def test_mmap_object():
     os.makedirs(".test/mmap_test/", exist_ok=True)
 
     arr1 = np.random.rand(100, 100, 100)
-    arr_mmap = MMapObject(arr1, ".test/mmap_test/arr.bin")
+    arr_mmap = MMapObject(".test/mmap_test/arr.bin", arr1)
     arr2 = arr_mmap.load()
     assert (arr1 == arr2).all()
 
@@ -32,7 +32,7 @@ def test_mmap_object():
         assert (arr1 == arr2).all()
 
     arr_mmap.close()
-    arr_mmap = MMapObject(arr1, ".test/mmap_test/arr.bin")
+    arr_mmap = MMapObject(".test/mmap_test/arr.bin", arr1)
     arr2 = arr_mmap.load()
     assert (arr1 == arr2).all()
     arr_mmap.close()
@@ -41,15 +41,13 @@ def test_mmap_object():
 def test_model_optimizer():
     os.makedirs(".test/model_optimizer_test/", exist_ok=True)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    fnn1 = FNN([10, 10], output=True).to(device)
-    fnn2 = FNN([10, 10], output=True).to(device)
+    fnn1 = FNN([10, 10], output=True)
+    fnn2 = FNN([10, 10], output=True)
     for param in fnn2.parameters():
         param.requires_grad_(False)
 
     opt = optim.Adam(fnn1.parameters(), lr=0.1)
-    fnn1(torch.randn(10, 10, device=device)).sum().backward()
+    fnn1(torch.randn(10, 10)).sum().backward()
     opt.step()
     opt.zero_grad(set_to_none=True)
 
@@ -68,7 +66,7 @@ def test_model_optimizer():
             model, opt = model_opt.load_dirty()
             for param in model.parameters():
                 assert param.requires_grad
-            x = torch.randn(32, 10, device=device)
+            x = torch.randn(32, 10)
             loss = mse_loss(model(x), i * torch.ones_like(x))
             loss.backward()
             opt.step()
@@ -87,7 +85,8 @@ def test_model_optimizer():
 
     for i, model_opt in enumerate(model_opts):
         model = model_opt.load_frozen()
-        x = torch.randn(32, 10, device=device)
+        x = torch.randn(32, 10)
         loss = mse_loss(model(x), i * torch.ones_like(x))
         assert loss.item() < 1e-3
         model_opt.unload_frozen(model)
+        model_opt.close()
