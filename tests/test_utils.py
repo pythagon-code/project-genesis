@@ -61,7 +61,7 @@ def test_model_optimizer():
         model_opt_containers
     ) for i in range(5)]
 
-    for _ in trange(300):
+    for _ in trange(300, desc="ModelOptimizer test"):
         for i, model_opt in enumerate(model_opts):
             model, opt = model_opt.load_dirty()
             for param in model.parameters():
@@ -87,6 +87,6 @@ def test_model_optimizer():
         model = model_opt.load_frozen()
         x = torch.randn(32, 10)
         loss = mse_loss(model(x), i * torch.ones_like(x))
-        assert loss.item() < 1e-3
+        assert loss.item() < 1e-4
         model_opt.unload_frozen(model)
         model_opt.close()
