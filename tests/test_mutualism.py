@@ -168,3 +168,58 @@ def test_chained_mutualism():
         polyak_update(final_actor_target, final_actor, polyak_factor=0.05)
 
     assert loss.item() < 1e-4
+
+
+def test_actor_critic_mutualism():
+    actors = [FNN([4, 16, 16, 4], output=True) for _ in range(2)]
+    actors_target = [FNN([4, 16, 16, 4], output=True) for _ in range(2)]
+    for i in range(2):
+        actors[i].load_state_dict(actors[i].state_dict())
+        for param in actors_target[i].parameters():
+            param.requires_grad_(False)
+    critic = FNN([8, 16, 16, 8, 1], output=True)
+    critic_target = FNN([8, 16, 16, 8, 1], output=True)
+    critic_target.load_state_dict(critic.state_dict())
+    for param in critic_target.parameters():
+        param.requires_grad_(False)
+    actors_opt = [optim.Adam(actor.parameters(), lr=1e-3) for actor in actors]
+    critic_opt = optim.Adam(critic.parameters(), lr=1e-3)
+
+    loss = torch.ones(1)
+    for _ in trange(500, desc="actor-critic mutualism test"):
+        state = torch.rand(64, 4)
+        mid_action = actors[0](state)
+        final_action = actors_target[1](mid_action)
+        loss = -torch.mean(critic(torch.cat([state, final_action], dim=-1)))
+        loss.backward()
+        actors_opt[0].step()
+        actors_opt[0].zero_grad(set_to_none=True)
+        actors_opt[1].zero_grad(set_to_none=True)
+        critic.zero_grad(set_to_none=True)
+
+        state = torch.rand(64, 4)
+        mid_action = actors_target[0](state)
+        final_action = actors[1](mid_action)
+        loss = -torch.mean(critic(torch.cat([state, final_action], dim=-1)))
+        loss.backward()
+        actors_opt[0].step()
+        actors_opt[0].zero_grad(set_to_none=True)
+        actors_opt[1].zero_grad(set_to_none=True)
+        critic.zero_grad(set_to_none=True)
+
+        with torch.no_grad():
+            state = torch.rand(64, 4)
+            mid_action = actors_target[0](state)
+            final_action = actors_target[1](mid_action)
+        reward = 1 - mse_loss(final_action, state / torch.pi)
+        predicted_reward = critic(torch.cat([state, final_action], dim=-1))
+        loss = mse_loss(reward, predicted_reward)
+        loss.backward()
+        critic_opt.step()
+        critic_opt.zero_grad(set_to_none=True)
+
+        polyak_update(actors_target[0], actors[0], polyak_factor=0.05)
+        polyak_update(actors_target[1], actors[1], polyak_factor=0.05)
+        polyak_update(critic_target, critic, polyak_factor=0.05)
+
+    assert loss < 1e-3

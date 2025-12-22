@@ -1,9 +1,7 @@
 system:
-    random_seed: 1
+    random_seed: 0
     data_size: 32
-    grid_length: 6
-    vocab_size: 30000
-    max_dot_product: 0.4
+    grid_length: 4
     flow_lifespan: 7
     flow_count: 12
     message_dim: 500

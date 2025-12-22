@@ -9,8 +9,6 @@ import warnings
 from .actor import Actor
 from .transformer import Transformer
 
-warnings.filterwarnings("ignore")
-
 
 class Critic(Transformer):
     def __init__(self, config: dict[str, Any]) -> None:

@@ -12,24 +12,27 @@ from .critic import Critic
 from .fnn import FNN
 
 
-class MessageAgent(nn.Module):
+class Agent(nn.Module):
     def __init__(self, config: dict[str, Any], device: str, rng: Generator) -> None:
         super().__init__()
 
-        message_agent_config = config["architecture"]["message_agent"]
-        lstm_config = message_agent_config["lstm"]
+        agent_config = config["architecture"]["agent"]
+        lstm_config = agent_config["lstm"]
 
-        self._stem = FNN(message_agent_config["stem_fnn"])
+        self._stem = FNN(agent_config["stem_fnn"])
         self._lstm = nn.LSTM(
             input_size=lstm_config["input_size"],
             hidden_size=lstm_config["hidden_size"],
             num_layers=lstm_config["num_layers"],
         )
-        self._heads = nn.ModuleList(FNN(message_agent_config["head_fnn"]) for _ in range(3))
+        self._message_heads = nn.ModuleList(FNN(agent_config["message_head_fnn"]) for _ in range(3))
+        self._routing_head = FNN(agent_config["routing_head_fnn"])
 
         self._discount_rate: float = config["system"]["discount_rate"]
         self._loss_emv_factor: float = config["optimization"]["loss_emv_factor"]
-        self._critic_loss_weight: float = config["optimization"]["critic_loss_weight"]
+        self._actor_loss_weight: float = config["optimization"]["loss_weight"]["actor"]
+        self._critic_loss_weight: float = config["optimization"]["loss_weight"]["critic"]
+        self._routing_loss_weight: float = config["optimization"]["loss_weight"]["routing"]
 
         self._actor_loss_ema = self._critic_loss_ema = 0.
         self._actor_loss_emv = self._critic_loss_emv = 1.
@@ -49,7 +52,7 @@ class MessageAgent(nn.Module):
         which_heads = which_heads or list(range(3))
         stem_out = self._stem(states)
         lstm_out, _ = self._lstm(stem_out, hidden_states)
-        heads_out = [self._heads[i](lstm_out) for i in which_heads]
+        heads_out = [self._message_heads[i](lstm_out) for i in which_heads]
         return heads_out
 
 
@@ -83,8 +86,8 @@ class MessageAgent(nn.Module):
         self,
         hidden_states: tuple[Tensor, ...],
         states: Tensor,
-        dsts: list[MessageAgent],
-        dsts_hidden_states: list[tuple[Tensor, ...]],
+        dests: list[Agent],
+        dests_hidden_states: list[tuple[Tensor, ...]],
         actor: Actor,
         critic: Critic,
         transformer_states: Tensor,
@@ -92,8 +95,8 @@ class MessageAgent(nn.Module):
         transformer_next_states: Tensor,
     ) -> Tensor:
         messages = self(hidden_states, states)
-        dsts_messages = [dsts[i](dsts_hidden_states[i], messages[i], [0])[0] for i in range(2)]
-        submissions = [messages[0]] + dsts_messages
+        dests_messages = [dests[i](dests_hidden_states[i], messages[i], [0])[0] for i in range(2)]
+        submissions = [messages[0]] + dests_messages
 
         transformer_states = [self._append_to_transformer_states(transformer_states, sub) for sub in submissions]
         transformer_states = torch.cat(transformer_states, dim=1)
@@ -126,13 +129,13 @@ if __name__ == "__main__":
     print("hello")
     cfg = get_config("configs/6x6")
     agent = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
-    dst1 = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
-    dst2 = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
+    dest1 = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
+    dest2 = MessageAgent(cfg, "cuda", default_rng(1)).to("cuda")
     actor = Actor(cfg).to("cuda")
     critic = Critic(cfg).to("cuda")
-    for param in dst1.parameters():
+    for param in dest1.parameters():
         param.requires_grad_(False)
-    for param in dst2.parameters():
+    for param in dest2.parameters():
         param.requires_grad_(False)
 
     opt = optim.Adam(agent.parameters(), lr=1e-3)
@@ -142,7 +145,7 @@ if __name__ == "__main__":
         agent.compute_loss(
             tuple(torch.randn(3, 16, 4, device="cuda") for _ in range(2)),
             torch.randn(7, 16, 2, device="cuda"),
-            [dst1, dst2],
+            [dest1, dest2],
             [tuple(torch.randn(3, 16, 4, device="cuda") for _ in range(2)) for _ in range(2)],
             actor,
             critic,
@@ -153,7 +156,7 @@ if __name__ == "__main__":
         opt.step()
         opt.zero_grad(set_to_none=True)
 
-    model_opt = ModelOptimizer("dev/test/mod", "dev/test/opt", deque([agent]), deque([opt]), float32)
+    # model_opt = ModelOptimizer("dev/test/mod", "dev/test/opt", deque([agent]), deque([opt]), float32)
 
 
     print(time() - start)

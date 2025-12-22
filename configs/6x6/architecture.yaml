@@ -1,11 +1,12 @@
 architecture:
-    message_agent:
+    agent:
         stem_fnn: [ 2, 2 ]
         lstm:
             input_size: 2
             hidden_size: 4
             num_layers: 3
-        head_fnn: [ 4, 32, 32, 2 ]
+        message_head_fnn: [ 4, 32, 32, 2 ]
+        routing_head_fnn: [4, 32, 32, 3]
     routing_agent_fnn: [ 1, 2, 2, 2, 3, 3 ]
     actor:
         stem_fnn: [ 2, 2 ]
