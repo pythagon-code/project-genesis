@@ -1,16 +1,19 @@
 from collections import deque
 from torch import nn, optim
+from typing import TypeVar
 
 from .mmap_object import MMapObject
 
+ModelType = TypeVar("ModelType", bound=nn.Module)
 
-class ModelOptimizer:
+
+class ModelOptimizer[ModelType]:
     def __init__(
         self,
         model_filename: str,
         optim_filename: str,
-        model_containers: deque[nn.Module] | None,
-        model_opt_containers: deque[tuple[nn.Module, optim.Optimizer]],
+        model_containers: deque[ModelType] | None,
+        model_opt_containers: tuple[ModelType, optim.Optimizer],
     ) -> None:
         self._model_containers = model_containers
         self._model_opt_containers = model_opt_containers
@@ -19,14 +22,14 @@ class ModelOptimizer:
         self._opt_state = MMapObject(optim_filename, self._model_opt_containers[0][1].state_dict())
 
 
-    def load_frozen(self) -> nn.Module:
+    def load_frozen(self) -> ModelType:
         assert len(self._model_containers) > 0
         model = self._model_containers.pop()
         model.load_state_dict(self._model_state.load())
         return model
 
 
-    def load_dirty(self) -> tuple[nn.Module, optim.Optimizer]:
+    def load_dirty(self) -> tuple[ModelType, optim.Optimizer]:
         assert len(self._model_opt_containers) > 0
         model, opt = self._model_opt_containers.pop()
         model.load_state_dict(self._model_state.load())
@@ -34,11 +37,11 @@ class ModelOptimizer:
         return model, opt
 
 
-    def unload_frozen(self, model: nn.Module) -> None:
+    def unload_frozen(self, model: ModelType) -> None:
         self._model_containers.append(model)
 
 
-    def unload_dirty(self, model: nn.Module, opt: optim.Optimizer) -> None:
+    def unload_dirty(self, model: ModelType, opt: optim.Optimizer) -> None:
         self._model_state.save(model.state_dict())
         self._opt_state.save(opt.state_dict())
         self._model_opt_containers.append((model, opt))

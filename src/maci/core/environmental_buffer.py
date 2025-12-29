@@ -11,9 +11,9 @@ class EnvironmentalBuffer:
         cerebrum: Cerebrum
     ) -> None:
         self._cerebrum = cerebrum
-        self._messages: list[torch.Tensor] = []
+        self._input_messages: list[torch.Tensor] = []
         self._logger = logging.getLogger(self.__class__.__name__)
 
 
-    def receive_message(self, message: torch.Tensor, sender: Neuron) -> None:
-        self._messages.append(message)
+    def submit_message(self, message: torch.Tensor) -> None:
+        self._input_messages.append(message)
