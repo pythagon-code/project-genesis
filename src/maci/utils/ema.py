@@ -5,6 +5,7 @@ T = TypeVar("T", Tensor, float)
 
 
 def get_ema(ema: T, data: T, factor: float) -> T:
+    print(type(ema), type(data), type(factor))
     return data * factor + ema * (1 - factor)
 
 

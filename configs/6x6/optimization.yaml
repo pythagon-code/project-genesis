@@ -3,8 +3,9 @@ optimization:
     batch_size:
         regular: 32
         sequence: 16
-    update_count: 2
-    training_frequency: 0.25
+    training:
+        frequency: 0.25
+        update_count: 2
     replay_buffer_size: 20000
     polyak_factor:
         initial: 0.1
@@ -14,5 +15,5 @@ optimization:
         actor: 1.
         critic: 5.
         routing: 0.25
-    loss_emv_factor: 0.001
+    loss_emv_factor: 1e-3
     truncation_length: 6

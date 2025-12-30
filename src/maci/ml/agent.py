@@ -210,10 +210,10 @@ if __name__ == "__main__":
     start = time()
     for i in trange(500):
         agent.compute_loss(
-            torch.randn(3, 16, 4, device="cuda"),
+            torch.randn(4, 16, 4, device="cuda"),
             torch.randn(7, 16, 2, device="cuda"),
             [dest1, dest2],
-            [torch.randn(3, 16, 4, device="cuda") for _ in range(2)],
+            [torch.randn(4, 16, 4, device="cuda") for _ in range(2)],
             actor,
             critic,
             torch.randn(11, 7, 16, 2, device="cuda"),

@@ -5,9 +5,9 @@ system:
         max_lifespan: 7
         count: 12
     float_bit_size: 32
-    dim:
+    dimension:
         message: 64
-        memory: 128
+        memory: 256
     epsilon:
         initial: 1
         final: 0.2

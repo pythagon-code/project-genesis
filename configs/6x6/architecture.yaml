@@ -4,7 +4,7 @@ architecture:
         lstm:
             input_size: 2
             hidden_size: 4
-            num_layers: 3
+            num_layers: 4
         message_head_fnn: [ 4, 32, 32, 2 ]
         routing_head_fnn: [4, 32, 32, 3]
     actor:
