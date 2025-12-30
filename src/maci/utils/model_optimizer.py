@@ -13,7 +13,7 @@ class ModelOptimizer[ModelType]:
         model_filename: str,
         optim_filename: str,
         model_containers: deque[ModelType] | None,
-        model_opt_containers: tuple[ModelType, optim.Optimizer],
+        model_opt_containers: deque[tuple[ModelType, optim.Optimizer]],
     ) -> None:
         self._model_containers = model_containers
         self._model_opt_containers = model_opt_containers
@@ -47,11 +47,11 @@ class ModelOptimizer[ModelType]:
         self._model_opt_containers.append((model, opt))
 
 
-    def flush(self):
+    def flush(self) -> None:
         self._model_state.flush()
         self._opt_state.flush()
 
 
-    def close(self):
+    def close(self) -> None:
         self._model_state.close()
         self._opt_state.close()

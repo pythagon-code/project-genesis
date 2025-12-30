@@ -2,11 +2,13 @@ import numpy as np
 from typing import Any
 from pathlib import Path
 
+
+
 class ReplayBuffer:
     def __init__(
             self,
             filename: str,
-            item_size: int,
+            items_size: tuple[int],
             max_length: int,
             dtype: type,
             sample_size: int,
@@ -26,7 +28,7 @@ class ReplayBuffer:
         self._array = np.memmap(filename, dtype=dtype, mode="r+", shape=(max_length, item_size))
     
 
-    def push(self, item: np.ndarray):
+    def push(self, item: np.ndarray) -> None:
         self._array[self._end, :] = item
         self._end = (self._end + 1) % self._max_length
         self._length = min(self._length + 1, self._max_length)

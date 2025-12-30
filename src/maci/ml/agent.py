@@ -77,7 +77,7 @@ class Agent(nn.Module):
         self,
         input_msg: Tensor,
         epsilon: float,
-        gaussian_noise_variance: float
+        gaussian_noise_var: float
     ) -> tuple[Tensor, int]:
         output_msg, route = self(
             self.hidden_state,
@@ -87,7 +87,7 @@ class Agent(nn.Module):
         noise_z = torch.from_numpy(
             self._rng.standard_normal(output_msg.shape),
         ).clamp(-self._max_abs_z, self._max_abs_z).to(output_msg.dtype).to(output_msg.device)
-        output_msg += gaussian_noise_variance * noise_z
+        output_msg += gaussian_noise_var * noise_z
         return output_msg, route
 
 

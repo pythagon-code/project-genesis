@@ -40,11 +40,11 @@ class MMapObject:
         self._mmap[8:end] = data
 
 
-    def flush(self):
+    def flush(self) -> None:
         self._mmap.flush()
 
 
-    def close(self):
+    def close(self) -> None:
         self.flush()
         self._file.close()
         self._mmap.close()
