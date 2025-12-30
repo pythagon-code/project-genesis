@@ -26,8 +26,8 @@ class Agent(nn.Module):
             hidden_size=lstm_config["hidden_size"],
             num_layers=lstm_config["num_layers"],
         )
-        self._message_heads = nn.ModuleList(FNN(agent_config["message_head_fnn"]) for _ in range(3))
-        self._routing_head = FNN(agent_config["routing_head_fnn"])
+        self._message_heads = nn.ModuleList(FNN(agent_config["message_head_fnn"], is_output=True) for _ in range(3))
+        self._routing_head = FNN(agent_config["routing_head_fnn"], is_output=True)
 
         self._discount_rate = cast(float, config["system"]["discount_rate"])
         self._loss_emv_factor = cast(float, config["optimization"]["loss_emv_factor"])
@@ -62,7 +62,7 @@ class Agent(nn.Module):
             routing_q_values = self._routing_head(rnn_out)
             route = torch.argmax(routing_q_values).item()
         elif routing_mode == self.RoutingMode.RANDOM_ROUTE:
-            route = self._rng.integers(0, 3)
+            route = self._rng.integers(low=0, high=3)
         elif routing_mode == self.RoutingMode.SUBMISSION_ROUTE:
             route = 2
         else:

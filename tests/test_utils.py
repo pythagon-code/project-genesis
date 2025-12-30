@@ -41,8 +41,8 @@ def test_mmap_object():
 def test_model_optimizer():
     os.makedirs(".test/model_optimizer_test/", exist_ok=True)
 
-    fnn1 = FNN([10, 10], output=True)
-    fnn2 = FNN([10, 10], output=True)
+    fnn1 = FNN([10, 10], is_output=True)
+    fnn2 = FNN([10, 10], is_output=True)
     for param in fnn2.parameters():
         param.requires_grad_(False)
 

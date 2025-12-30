@@ -18,7 +18,7 @@ class Transformer(ABC, nn.Module):
             embed_dim=attention_config["embed_dim"],
             num_heads=attention_config["num_heads"],
         )
-        self.out = FNN(config["out_fnn"], output=True)
+        self.out = FNN(config["out_fnn"], is_output=True)
 
 
     def forward(self, x: Tensor, _: Tensor | None=None) -> Tensor:

@@ -3,7 +3,7 @@ from torch import nn
 
 
 class FNN(nn.Module):
-    def __init__(self, sizes: list[int], output: bool=False) -> None:
+    def __init__(self, sizes: list[int], is_output: bool=False) -> None:
         super().__init__()
 
         layers = []
@@ -14,7 +14,7 @@ class FNN(nn.Module):
             layers.append(nn.LeakyReLU())
             prev_size = curr_size
 
-        if output:
+        if is_output:
             layers.pop()
             layers.pop()
 

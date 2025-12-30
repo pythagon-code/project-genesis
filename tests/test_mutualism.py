@@ -10,7 +10,7 @@ from . import device
 
 
 def test_simple_mutualism():
-    actors = [FNN([4, 16, 16, 4], output=True) for _ in range(2)]
+    actors = [FNN([4, 16, 16, 4], is_output=True) for _ in range(2)]
     actors_opt = [optim.Adam(actor.parameters(), lr=1e-3) for actor in actors]
 
     loss = torch.ones(1)
@@ -36,13 +36,13 @@ def test_simple_mutualism():
 
 
 def test_split_mutualism():
-    mid_actors = [FNN([4, 32, 32, 4], output=True).to(device) for _ in range(2)]
-    mid_actors_target = [FNN([4, 32, 32, 4], output=True).to(device) for _ in range(2)]
+    mid_actors = [FNN([4, 32, 32, 4], is_output=True).to(device) for _ in range(2)]
+    mid_actors_target = [FNN([4, 32, 32, 4], is_output=True).to(device) for _ in range(2)]
     for i in range(2):
         mid_actors_target[i].load_state_dict(mid_actors[i].state_dict())
         for param in mid_actors_target[i].parameters():
             param.requires_grad_(False)
-    final_actor = FNN([8, 32, 32, 8], output=True).to(device)
+    final_actor = FNN([8, 32, 32, 8], is_output=True).to(device)
     mid_actors_opt = [optim.Adam(actor.parameters(), lr=1e-3) for actor in mid_actors]
     final_actor_opt = optim.Adam(final_actor.parameters(), lr=1e-3)
 
@@ -76,13 +76,13 @@ def test_split_mutualism():
 
 
 def test_independent_mutualism():
-    mid_actors = [FNN([4, 32, 32, 8], output=True).to(device) for _ in range(2)]
-    mid_actors_target = [FNN([4, 32, 32, 8], output=True).to(device) for _ in range(2)]
+    mid_actors = [FNN([4, 32, 32, 8], is_output=True).to(device) for _ in range(2)]
+    mid_actors_target = [FNN([4, 32, 32, 8], is_output=True).to(device) for _ in range(2)]
     for i in range(2):
         mid_actors_target[i].load_state_dict(mid_actors[i].state_dict())
         for param in mid_actors_target[i].parameters():
             param.requires_grad_(False)
-    final_actor = FNN([8, 32, 32, 4], output=True).to(device)
+    final_actor = FNN([8, 32, 32, 4], is_output=True).to(device)
     mid_actors_opt = [optim.Adam(actor.parameters(), lr=1e-3) for actor in mid_actors]
     final_actor_opt = optim.Adam(final_actor.parameters(), lr=1e-3)
 
@@ -114,14 +114,14 @@ def test_independent_mutualism():
 
 
 def test_chained_mutualism():
-    mid_actors = [FNN([4 + 12 * i, 32, 32, 16], output=True).to(device) for i in range(2)]
-    mid_actors_target = [FNN([4 + 12 * i, 32, 32, 16], output=True).to(device) for i in range(3)]
+    mid_actors = [FNN([4 + 12 * i, 32, 32, 16], is_output=True).to(device) for i in range(2)]
+    mid_actors_target = [FNN([4 + 12 * i, 32, 32, 16], is_output=True).to(device) for i in range(3)]
     for i in range(2):
         mid_actors_target[i].load_state_dict(mid_actors[i].state_dict())
         for param in mid_actors_target[i].parameters():
             param.requires_grad_(False)
-    final_actor = FNN([16, 32, 32, 4], output=True).to(device)
-    final_actor_target = FNN([16, 32, 32, 4], output=True).to(device)
+    final_actor = FNN([16, 32, 32, 4], is_output=True).to(device)
+    final_actor_target = FNN([16, 32, 32, 4], is_output=True).to(device)
     final_actor_target.load_state_dict(final_actor.state_dict())
     for param in final_actor_target.parameters():
         param.requires_grad_(False)
@@ -171,14 +171,14 @@ def test_chained_mutualism():
 
 
 def test_actor_critic_mutualism():
-    actors = [FNN([4, 16, 16, 4], output=True) for _ in range(2)]
-    actors_target = [FNN([4, 16, 16, 4], output=True) for _ in range(2)]
+    actors = [FNN([4, 16, 16, 4], is_output=True) for _ in range(2)]
+    actors_target = [FNN([4, 16, 16, 4], is_output=True) for _ in range(2)]
     for i in range(2):
         actors[i].load_state_dict(actors[i].state_dict())
         for param in actors_target[i].parameters():
             param.requires_grad_(False)
-    critic = FNN([8, 16, 16, 8, 1], output=True)
-    critic_target = FNN([8, 16, 16, 8, 1], output=True)
+    critic = FNN([8, 16, 16, 8, 1], is_output=True)
+    critic_target = FNN([8, 16, 16, 8, 1], is_output=True)
     critic_target.load_state_dict(critic.state_dict())
     for param in critic_target.parameters():
         param.requires_grad_(False)
