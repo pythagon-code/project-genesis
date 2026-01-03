@@ -32,10 +32,10 @@ class Cerebrum:
         self.polyak_factor = polyak_factor
         self.rng = rng
         self.step = step
-        self.agent_containers = deque([Agent(config, rng).to(dtype).to(device) for _ in range(3)])
-        dirty_agent = Agent(config, rng).to(dtype).to(device)
-        learning_rate = config["optimization"]["learning_rate"]
-        self.agent_opt_containers = deque([dirty_agent, optim.Adam(dirty_agent.parameters(), lr=learning_rate)])
+        # self.agent_containers = deque([Agent(config, rng).to(dtype).to(device) for _ in range(3)])
+        # dirty_agent = Agent(config, rng).to(dtype).to(device)
+        # learning_rate = config["optimization"]["learning_rate"]
+        # self.agent_opt_containers = deque([dirty_agent, optim.Adam(dirty_agent.parameters(), lr=learning_rate)])
         self._logger = logging.getLogger(self.__class__.__name__)
 
 

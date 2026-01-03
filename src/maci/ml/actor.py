@@ -15,7 +15,7 @@ class Actor(Transformer):
         super().__init__(config["architecture"]["actor"])
 
 
-    def compute_loss(self, states: Tensor, critic: Critic) -> Tensor:
+    def compute_loss(self, critic: Critic, states: Tensor) -> Tensor:
         actions = self(states)
         q_values = critic(states, actions)
         return -torch.mean(q_values)

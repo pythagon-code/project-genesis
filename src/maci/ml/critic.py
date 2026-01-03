@@ -26,12 +26,12 @@ class Critic(Transformer):
 
     def compute_loss(
         self,
+        target_actor: Actor,
         target_self: Critic,
         states: Tensor,
         actions: Tensor,
         rewards: Tensor,
-        next_states: Tensor,
-        target_actor: Actor
+        next_states: Tensor
     ) -> Tensor:
         q_values = self(states, actions)
 

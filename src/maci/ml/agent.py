@@ -79,16 +79,17 @@ class Agent(nn.Module):
         epsilon: float,
         gaussian_noise_var: float
     ) -> tuple[Tensor, int]:
-        output_msg, route = self(
-            self.hidden_state,
-            input_msg,
-            self.RoutingMode.RANDOM_ROUTE if self._rng.random() < epsilon else self.RoutingMode.BEST_ROUTE
-        )
-        noise_z = torch.from_numpy(
-            self._rng.standard_normal(output_msg.shape),
-        ).clamp(-self._max_abs_z, self._max_abs_z).to(output_msg.dtype).to(output_msg.device)
-        output_msg += gaussian_noise_var * noise_z
-        return output_msg, route
+        with torch.no_grad():
+            output_msg, route = self(
+                self.hidden_state,
+                input_msg,
+                self.RoutingMode.RANDOM_ROUTE if self._rng.random() < epsilon else self.RoutingMode.BEST_ROUTE
+            )
+            noise_z = torch.from_numpy(
+                self._rng.standard_normal(output_msg.shape),
+            ).clamp(-self._max_abs_z, self._max_abs_z).to(output_msg.dtype).to(output_msg.device)
+            output_msg += gaussian_noise_var * noise_z
+            return output_msg, route
 
 
     def _combine_losses(
@@ -136,20 +137,20 @@ class Agent(nn.Module):
     
     def compute_loss(
         self,
+        dest_agents: list[Agent],
+        target_actor: Actor,
+        target_critic: Critic,
         hidden_states: Tensor,
         states: Tensor,
-        dests: list[Agent],
-        dests_hidden_states: list[Tensor],
-        actor: Actor,
-        critic: Critic,
+        dest_neurons_hidden_states: list[Tensor],
         transformer_states: Tensor,
         transformer_rewards: Tensor,
         transformer_next_states: Tensor,
         routes: Tensor,
     ) -> Tensor:
         messages, routing_q_values = self(hidden_states, states, self.RoutingMode.ALL_ROUTES)
-        dests_messages = [dests[i](
-            dests_hidden_states[i],
+        dests_messages = [dest_agents[i](
+            dest_neurons_hidden_states[i],
             messages[i],
             self.RoutingMode.SUBMISSION_ROUTE,
         )[0] for i in range(2)]
@@ -157,9 +158,9 @@ class Agent(nn.Module):
 
         transformer_states = [self._append_to_transformer_states(transformer_states, sub) for sub in submissions]
         transformer_states = torch.cat(transformer_states, dim=1)
-        transformer_actions = actor(transformer_states)
+        transformer_actions = target_actor(transformer_states)
 
-        q_values = critic(transformer_states, transformer_actions)
+        q_values = target_critic(transformer_states, transformer_actions)
 
         actor_loss = -torch.mean(q_values)
 
@@ -169,8 +170,8 @@ class Agent(nn.Module):
             transformer_next_states = transformer_next_states.flatten(start_dim=1, end_dim=2)
             transformer_rewards = transformer_rewards.flatten(end_dim=1)
 
-            transformer_next_actions = actor(transformer_next_states)
-            next_q_values = critic(transformer_next_states, transformer_next_actions)
+            transformer_next_actions = target_actor(transformer_next_states)
+            next_q_values = target_critic(transformer_next_states, transformer_next_actions)
             target_q_values = transformer_rewards + self._discount_rate * next_q_values
 
         critic_loss = mse_loss(q_values, target_q_values.expand_as(q_values))
@@ -209,18 +210,12 @@ if __name__ == "__main__":
     print(agent)
     start = time()
     for i in trange(500):
-        agent.compute_loss(
-            torch.randn(4, 16, 4, device="cuda"),
-            torch.randn(7, 16, 2, device="cuda"),
-            [dest1, dest2],
-            [torch.randn(4, 16, 4, device="cuda") for _ in range(2)],
-            actor,
-            critic,
-            torch.randn(11, 7, 16, 2, device="cuda"),
-            torch.randn(7, 16, 1, device="cuda"),
-            torch.randn(12, 7, 16, 2, device="cuda"),
-            torch.randint(0, 3, (7, 16, 1), dtype=torch.int32, device="cuda")
-        ).backward()
+        agent.compute_loss([dest1, dest2], actor, critic, torch.randn(4, 16, 4, device="cuda"),
+                           torch.randn(7, 16, 2, device="cuda"),
+                           [torch.randn(4, 16, 4, device="cuda") for _ in range(2)],
+                           torch.randn(11, 7, 16, 2, device="cuda"), torch.randn(7, 16, 1, device="cuda"),
+                           torch.randn(12, 7, 16, 2, device="cuda"),
+                           torch.randint(0, 3, (7, 16, 1), dtype=torch.int32, device="cuda")).backward()
         agent.select_action(torch.randn(1, 2, device="cuda"), 0.5, 0.2)
         opt.step()
         opt.zero_grad(set_to_none=True)
