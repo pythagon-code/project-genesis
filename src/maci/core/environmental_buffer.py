@@ -1,5 +1,6 @@
 from collections import deque
 import logging
+import numpy as np
 import torch
 from torch import Tensor, optim
 from typing import cast
@@ -30,12 +31,19 @@ class EnvironmentalBuffer:
         self._critic_opt = critic_opt
         self.target_critic = target_critic
         self._replay_buffer = replay_buffer
-        self._input_msgs = cast(deque[Tensor], deque(maxlen=cerebrum.config["system"]["flow"]["count"]))
+        self._messages = cast(deque[Tensor], deque(maxlen=cerebrum.config["system"]["flow"]["count"]))
+        self.transformer_messages = np.empty(shape=[0])
+
         self._logger = logging.getLogger(self.__class__.__name__)
 
 
+    def clear_messages(self) -> None:
+        self._messages.clear()
+
+
     def submit_message(self, message: Tensor) -> None:
-        self._input_msgs.append(message)
+        assert len(self._messages) < self._messages.maxlen
+        self._messages.append(message)
 
 
     def _train(self) -> None:
@@ -51,10 +59,10 @@ class EnvironmentalBuffer:
 
 
     def generate_final_action(self) -> Tensor:
-        assert len(self._input_msgs) == self._cerebrum.config["system"]["flow"]["count"]
+        assert len(self._messages) == self._messages.maxlen
 
         if self._cerebrum.rng.random() < self._cerebrum.config["optimization"]["training"]["frequency"]:
             self._train()
 
         with torch.no_grad():
-            return self.target_actor(torch.cat(list(self._input_msgs), dim=0))
+            return self.target_actor(torch.cat(list(self._messages), dim=0))

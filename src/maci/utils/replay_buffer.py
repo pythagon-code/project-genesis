@@ -35,23 +35,15 @@ class ReplayBuffer:
             np.save(file_path, np.empty(shape=(max_length, self._item_size), dtype=dtype))
 
         self._array = np.memmap(filename, dtype=dtype, mode="r+", shape=(max_length, self._item_size))
-
-
-    def create_item(self) -> tuple[np.ndarray, list[np.ndarray]]:
-        item = np.empty(self._item_size)
-
-        subitem_list = []
-        sizes_sum = 0
-        for size, flat_size in zip(self._subitems_size, self._subitems_flat_size):
-            subitem = np.reshape(item[sizes_sum:sizes_sum + flat_size], shape=size)
-            sizes_sum += flat_size
-            subitem_list.append(subitem)
-
-        return item, subitem_list
     
 
-    def push(self, item: np.ndarray) -> None:
-        self._array[self._end, :] = item
+    def push(self, subitems: list[np.ndarray]) -> None:
+        flat_subitems = []
+        for subitem, size in zip(subitems, self._subitems_size):
+            assert subitem.shape == size
+            flat_subitems.append(subitem.flatten())
+
+        self._array[self._end, :] = np.concat(flat_subitems)
         self._end = (self._end + 1) % self._max_length
         self._length = min(self._length + 1, self._max_length)
 
@@ -63,11 +55,11 @@ class ReplayBuffer:
     def sample(self) -> list[np.ndarray]:
         sample = self._rng.choice(self._array[:self._length], size=min(self._length, self._sample_size))
 
-        subitem_list = []
+        subitems = []
         sizes_sum = 0
         for size, flat_size in zip(self._subitems_size, self._subitems_flat_size):
             subitem = np.reshape(sample[:, sizes_sum:sizes_sum + flat_size], shape=(-1, *size))
             sizes_sum += flat_size
-            subitem_list.append(subitem)
+            subitems.append(subitem)
 
-        return subitem_list
+        return subitems

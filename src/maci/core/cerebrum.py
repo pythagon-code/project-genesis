@@ -20,7 +20,8 @@ class Cerebrum:
         gaussian_noise_var: float,
         polyak_factor: float,
         rng: np.random.Generator,
-        dtype: torch.dtype,
+        numpy_dtype: np.dtype,
+        torch_dtype: torch.dtype,
         device: str,
         step: int
     ) -> None:
@@ -31,6 +32,9 @@ class Cerebrum:
         self.gaussian_noise_var = gaussian_noise_var
         self.polyak_factor = polyak_factor
         self.rng = rng
+        self.numpy_dtype = numpy_dtype
+        self.torch_dtype = torch_dtype
+        self.device = device
         self.step = step
         # self.agent_containers = deque([Agent(config, rng).to(dtype).to(device) for _ in range(3)])
         # dirty_agent = Agent(config, rng).to(dtype).to(device)

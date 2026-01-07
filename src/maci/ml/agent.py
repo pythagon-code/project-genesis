@@ -4,6 +4,7 @@ from enum import Enum
 import numpy as np
 from typing import Any, cast
 import torch
+from sympy import sequence
 from torch import Tensor, nn
 from torch.nn.functional import mse_loss
 
@@ -55,9 +56,9 @@ class Agent(nn.Module):
         hidden_states: Tensor,
         states: Tensor,
         routing_mode: RoutingMode,
-    ) -> tuple[Tensor, int] | tuple[list[Tensor], Tensor]:
+    ) -> tuple[Tensor, int, Tensor] | tuple[list[Tensor], Tensor]:
         stem_out = self._stem(states)
-        rnn_out, _ = self._rnn(stem_out, hidden_states)
+        rnn_out, next_hidden_states = self._rnn(stem_out, hidden_states)
         if routing_mode == self.RoutingMode.BEST_ROUTE:
             routing_q_values = self._routing_head(rnn_out)
             route = torch.argmax(routing_q_values).item()
@@ -70,26 +71,27 @@ class Agent(nn.Module):
             messages = [self._message_heads[i](rnn_out) for i in range(3)]
             return messages, routing_q_values
         message = self._message_heads[route](rnn_out)
-        return message, route
+        return message, route, next_hidden_states
 
 
     def select_action(
         self,
-        input_msg: Tensor,
+        hidden_state: Tensor,
+        state: Tensor,
         epsilon: float,
         gaussian_noise_var: float
-    ) -> tuple[Tensor, int]:
+    ) -> tuple[Tensor, int, Tensor]:
         with torch.no_grad():
-            output_msg, route = self(
-                self.hidden_state,
-                input_msg,
+            output_msg, route, next_hidden_state = self(
+                hidden_state,
+                state,
                 self.RoutingMode.RANDOM_ROUTE if self._rng.random() < epsilon else self.RoutingMode.BEST_ROUTE
             )
             noise_z = torch.from_numpy(
                 self._rng.standard_normal(output_msg.shape),
             ).clamp(-self._max_abs_z, self._max_abs_z).to(output_msg.dtype).to(output_msg.device)
             output_msg += gaussian_noise_var * noise_z
-            return output_msg, route
+            return output_msg, route, next_hidden_state
 
 
     def _combine_losses(
@@ -128,11 +130,10 @@ class Agent(nn.Module):
         )
 
 
-    @staticmethod
-    def _append_to_transformer_states(transformer_states: Tensor, other_states: Tensor) -> Tensor:
-        other_states = other_states.flatten(end_dim=1).unsqueeze(dim=0)
-        transformer_states = transformer_states.flatten(start_dim=1, end_dim=2)
-        return torch.cat([transformer_states, other_states])
+    # @staticmethod
+    # def _append_to_transformer_states(transformer_states: Tensor, other_states: Tensor) -> Tensor:
+    #     transformer_states = transformer_states.flatten(start_dim=1, end_dim=2)
+    #     return torch.cat([transformer_states, other_states], dim=0)
 
     
     def compute_loss(
@@ -141,40 +142,42 @@ class Agent(nn.Module):
         target_actor: Actor,
         target_critic: Critic,
         hidden_states: Tensor,
+        dest_neurons_hidden_states: Tensor,
         states: Tensor,
-        dest_neurons_hidden_states: list[Tensor],
-        transformer_states: Tensor,
+        transformer_other_states: Tensor,
+        transformer_actions: Tensor,
         transformer_rewards: Tensor,
         transformer_next_states: Tensor,
         routes: Tensor,
     ) -> Tensor:
         messages, routing_q_values = self(hidden_states, states, self.RoutingMode.ALL_ROUTES)
-        dests_messages = [dest_agents[i](
-            dest_neurons_hidden_states[i],
-            messages[i],
+        messages[2] = torch.flatten(messages[2], end_dim=1).unsqueeze(dim=0)
+        dest_neurons_submissions = [dest_agents[i](
+            dest_neurons_hidden_states[i].flatten(start_dim=1, end_dim=2),
+            messages[i].flatten(end_dim=1).unsqueeze(dim=0),
             self.RoutingMode.SUBMISSION_ROUTE,
         )[0] for i in range(2)]
-        submissions = [messages[0]] + dests_messages
+        submissions = torch.stack([messages[2]] + dest_neurons_submissions, dim=1)
 
-        transformer_states = [self._append_to_transformer_states(transformer_states, sub) for sub in submissions]
-        transformer_states = torch.cat(transformer_states, dim=1)
-        transformer_actions = target_actor(transformer_states)
-
-        q_values = target_critic(transformer_states, transformer_actions)
+        transformer_other_states = transformer_other_states.flatten(start_dim=1, end_dim=2)
+        transformer_other_states = transformer_other_states.unsqueeze(dim=1).expand(-1, 3, -1, -1)
+        transformer_states = torch.cat([transformer_other_states, submissions])
+        transformer_states = transformer_states.flatten(start_dim=1, end_dim=2)
+        transformer_new_actions = target_actor(transformer_states)
+        q_values = target_critic(transformer_states, transformer_new_actions)
 
         actor_loss = -torch.mean(q_values)
 
-        q_values = torch.unflatten(q_values, dim=0, sizes=(3, q_values.shape[0] // 3))
-
+        transformer_actions = transformer_actions.expand(3, -1, -1, -1).flatten(end_dim=2)
+        q_values = target_critic(transformer_states, transformer_actions)
         with torch.no_grad():
             transformer_next_states = transformer_next_states.flatten(start_dim=1, end_dim=2)
             transformer_rewards = transformer_rewards.flatten(end_dim=1)
-
             transformer_next_actions = target_actor(transformer_next_states)
             next_q_values = target_critic(transformer_next_states, transformer_next_actions)
             target_q_values = transformer_rewards + self._discount_rate * next_q_values
 
-        critic_loss = mse_loss(q_values, target_q_values.expand_as(q_values))
+        critic_loss = mse_loss(q_values, target_q_values.expand(3, -1, -1).flatten(end_dim=1))
 
         interesting_q_values = torch.gather(routing_q_values, dim=-1, index=routes).flatten(end_dim=1)
 
@@ -209,14 +212,24 @@ if __name__ == "__main__":
     opt = optim.Adam(agent.parameters(), lr=1e-3)
     print(agent)
     start = time()
+
+    hidden_state = torch.randn(4, 4, device="cuda")
+
     for i in trange(500):
-        agent.compute_loss([dest1, dest2], actor, critic, torch.randn(4, 16, 4, device="cuda"),
-                           torch.randn(7, 16, 2, device="cuda"),
-                           [torch.randn(4, 16, 4, device="cuda") for _ in range(2)],
-                           torch.randn(11, 7, 16, 2, device="cuda"), torch.randn(7, 16, 1, device="cuda"),
-                           torch.randn(12, 7, 16, 2, device="cuda"),
-                           torch.randint(0, 3, (7, 16, 1), dtype=torch.int32, device="cuda")).backward()
-        agent.select_action(torch.randn(1, 2, device="cuda"), 0.5, 0.2)
+        agent.compute_loss(
+            [dest1, dest2],
+            actor,
+            critic,
+            torch.randn(4, 16, 4, device="cuda"),
+            torch.randn(2, 4, 7, 16, 4, device="cuda"),
+            torch.randn(7, 16, 2, device="cuda"),
+            torch.randn(11, 7, 16, 2, device="cuda"),
+            torch.randn(7, 16, 2, device="cuda"),
+            torch.randn(7, 16, 1, device="cuda"),
+            torch.randn(12, 7, 16, 2, device="cuda"),
+            torch.randint(0, 3, (7, 16, 1), dtype=torch.int32, device="cuda")
+        ).backward()
+        agent.select_action(hidden_state, torch.randn(1, 2, device="cuda"), 0.2, 0.2)
         opt.step()
         opt.zero_grad(set_to_none=True)
 

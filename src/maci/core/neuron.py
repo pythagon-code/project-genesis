@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import numpy as np
+import torch
 from torch import Tensor
 from typing import cast
 
@@ -15,26 +17,29 @@ class Neuron:
     @dataclass
     class SamplePiece:
         flow_idx: int
-        piece: list[Tensor]
+        piece: list[None | np.ndarray]
 
 
     def __init__(
         self,
         cerebrum: Cerebrum,
         agent: ModelOptimizer[Agent],
+        hidden_state: Tensor,
         replay_buffer: ReplayBuffer,
         src_neurons: list[Neuron],
         dest_neurons: list[Neuron],
-        sample: list[Tensor],
+        sample: list[None | np.ndarray],
         sample_idx: int
     ) -> None:
         self._cerebrum = cerebrum
         self._agent = agent
+        self._hidden_state = hidden_state
         self._replay_buffer = replay_buffer
         self._src_neurons = src_neurons
         self._dest_neurons = dest_neurons
         self._sample = sample
         self._sample_idx = sample_idx
+        self._prev_sample_pieces = cast(list[self.SamplePiece], [])
         self._sample_pieces = cast(list[self.SamplePiece], [])
         self._logger = logging.getLogger(self.__class__.__name__)
 
@@ -45,7 +50,25 @@ class Neuron:
 
 
     def collect_samples(self) -> None:
-        self.
+        for piece in self._sample_pieces:
+            transformer_states = self._cerebrum.environmental_buffer.transformer_states
+            transformer_other_states = np.concat([
+                transformer_states[:piece.flow_idx],
+                transformer_states[piece.flow_idx + 1:]
+            ])
+            piece.piece[3] = transformer_other_states
+            piece.piece[4] = self._cerebrum.environmental_buffer.transformer_rewards
+            piece.piece[5] = self._cerebrum.environmental_buffer.transformer_next_states
+
+            self._sample[self._sample_idx] = piece.piece
+            self._sample_idx += 1
+
+            if self._sample_idx == len(self._sample):
+                self._replay_buffer.push(self._sample)
+                self._sample_idx = 0
+
+        self._sample_pieces = self._prev_sample_pieces
+        self._prev_sample_pieces = []
 
 
     def train(self) -> None:
@@ -54,8 +77,12 @@ class Neuron:
 
         for i in range(self._cerebrum.config["optimization"]["training"]["update_count"]):
             sample = self._replay_buffer.sample()
-            loss = agent.compute_loss(dest_agents, self._cerebrum.environmental_buffer.target_actor,
-                                      self._cerebrum.environmental_buffer.target_critic,,
+            loss = agent.compute_loss(
+                dest_agents,
+                self._cerebrum.environmental_buffer.target_actor,
+                self._cerebrum.environmental_buffer.target_critic,
+                *sample
+            )
             loss.backward()
             opt.step()
             opt.zero_grad(set_to_none=True)
@@ -64,17 +91,24 @@ class Neuron:
 
 
     def process_message(self, flow_idx: int, input_msg: Tensor) -> None:
-        self._sample_pieces.append(self.SamplePiece(flow_idx, [
-
-        ]))
-
         agent = self._agent.load_frozen()
 
-        output_msg, route = agent.select_action(
+        output_msg, route, self._hidden_state = agent.select_action(
+            self._hidden_state,
             input_msg,
             self._cerebrum.epsilon,
             self._cerebrum.gaussian_noise_var
         )
+
+        self._prev_sample_pieces.append(self.SamplePiece(flow_idx, [
+            self._hidden_state.numpy().copy(),
+            input_msg.numpy().copy(),
+            np.stack([self._dest_neurons[i]._hidden_state.numpy().copy() for i in range(2)]),
+            None,
+            None,
+            None,
+            np.array([route], dtype=self._cerebrum.numpy_dtype),
+        ]))
 
         self._agent.unload_frozen(agent)
 
