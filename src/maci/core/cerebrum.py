@@ -11,35 +11,57 @@ from ..ml.agent import Agent
 
 
 class Cerebrum:
-    def __init__(
-        self,
-        config: dict[str, Any],
-        neurons: list[Neuron],
-        environmental_buffer: EnvironmentalBuffer,
-        epsilon: float,
-        gaussian_noise_var: float,
-        polyak_factor: float,
-        rng: np.random.Generator,
-        numpy_dtype: np.dtype,
-        torch_dtype: torch.dtype,
-        device: str,
-        step: int
-    ) -> None:
+    def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
-        self.neurons = neurons
-        self.environmental_buffer = environmental_buffer
-        self.epsilon = epsilon
-        self.gaussian_noise_var = gaussian_noise_var
-        self.polyak_factor = polyak_factor
-        self.rng = rng
-        self.numpy_dtype = numpy_dtype
-        self.torch_dtype = torch_dtype
-        self.device = device
-        self.step = step
+        self.neurons = [Neuron() if _ in range]
+        # self.epsilon = epsilon
+        # self.gaussian_noise_var = gaussian_noise_var
+        # self.polyak_factor = polyak_factor
+        # self.rng = rng
+        # self.numpy_dtype = numpy_dtype
+        # self.torch_dtype = torch_dtype
+        # self.device = device
+        # self.step = step
         # self.agent_containers = deque([Agent(config, rng).to(dtype).to(device) for _ in range(3)])
         # dirty_agent = Agent(config, rng).to(dtype).to(device)
-        # learning_rate = config["optimization"]["learning_rate"]
         # self.agent_opt_containers = deque([dirty_agent, optim.Adam(dirty_agent.parameters(), lr=learning_rate)])
+        self._logger = logging.getLogger(self.__class__.__name__)
+
+
+    def __getstate__(self) -> tuple:
+        return (
+            self.config,
+            self.neurons,
+            self.environmental_buffer,
+            self.epsilon,
+            self.gaussian_noise_var,
+            self.polyak_factor,
+            self.rng,
+            self.numpy_dtype,
+            self.torch_dtype,
+            self.device,
+            self.step,
+            self.frozen_agent_containers,
+            self.dirty_agent_containers
+        )
+
+
+    def __setstate__(self, state: tuple) -> None:
+        (
+            self.config,
+            self.neurons,
+            self.environmental_buffer,
+            self.epsilon,
+            self.gaussian_noise_var,
+            self.polyak_factor,
+            self.rng,
+            self.numpy_dtype,
+            self.torch_dtype,
+            self.device,
+            self.step,
+            self.frozen_agent_containers,
+            self.dirty_agent_containers
+        ) = state
         self._logger = logging.getLogger(self.__class__.__name__)
 
 

@@ -179,6 +179,7 @@ class Agent(nn.Module):
 
         critic_loss = mse_loss(q_values, target_q_values.expand(3, -1, -1).flatten(end_dim=1))
 
+        routes = routes.to(dtype=torch.int32)
         interesting_q_values = torch.gather(routing_q_values, dim=-1, index=routes).flatten(end_dim=1)
 
         routing_loss = mse_loss(interesting_q_values, target_q_values)

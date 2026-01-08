@@ -11,7 +11,7 @@ from ..ml.critic import Critic
 from ..utils.replay_buffer import ReplayBuffer
 
 
-class EnvironmentalBuffer:
+class MessageBuffer:
     def __init__(
         self,
         cerebrum: Cerebrum,
@@ -32,18 +32,22 @@ class EnvironmentalBuffer:
         self.target_critic = target_critic
         self._replay_buffer = replay_buffer
         self._messages = cast(deque[Tensor], deque(maxlen=cerebrum.config["system"]["flow"]["count"]))
-        self.transformer_messages = np.empty(shape=[0])
-
+        self.transformer_state = cast(None | np.ndarray, None)
+        self.transformer_action = cast(None | np.ndarray, None)
+        self.transformer_reward = cast(None | np.ndarray, None)
+        self.transformer_next_state = cast(None | np.ndarray, None)
+        self._transformer_next_reward = cast(None | np.ndarray, None)
+        self._transformer_next_action = cast(None | np.ndarray, None)
         self._logger = logging.getLogger(self.__class__.__name__)
-
-
-    def clear_messages(self) -> None:
-        self._messages.clear()
 
 
     def submit_message(self, message: Tensor) -> None:
         assert len(self._messages) < self._messages.maxlen
         self._messages.append(message)
+
+
+    def clear_messages(self) -> None:
+        self._messages.clear()
 
 
     def _train(self) -> None:
@@ -58,11 +62,29 @@ class EnvironmentalBuffer:
             self._actor_opt.zero_grad(set_to_none=True)
 
 
-    def generate_final_action(self) -> Tensor:
+    def generate_final_action(self) -> np.ndarray:
         assert len(self._messages) == self._messages.maxlen
 
         if self._cerebrum.rng.random() < self._cerebrum.config["optimization"]["training"]["frequency"]:
             self._train()
 
+        self.transformer_state = self.transformer_next_state
+        self.transformer_action = self._transformer_next_action
+        self.transformer_reward = self._transformer_next_reward
+        self.transformer_next_state = np.stack([msg for msg in self._messages])
         with torch.no_grad():
-            return self.target_actor(torch.cat(list(self._messages), dim=0))
+            self._transformer_next_action = self.target_actor(torch.cat(list(self._messages))).numpy().copy()
+
+        if self.transformer_next_state is not None:
+            self._replay_buffer.push([
+                self.transformer_state,
+                self.transformer_action,
+                self.transformer_reward,
+                self.transformer_next_state
+            ])
+
+        return self._transformer_next_action
+
+
+    def give_reward(self, reward: float) -> None:
+        self._transformer_next_reward = reward

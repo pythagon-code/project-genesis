@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 import numpy as np
-import torch
 from torch import Tensor
 from typing import cast
 
@@ -19,7 +18,6 @@ class Neuron:
         flow_idx: int
         piece: list[None | np.ndarray]
 
-
     def __init__(
         self,
         cerebrum: Cerebrum,
@@ -29,7 +27,7 @@ class Neuron:
         src_neurons: list[Neuron],
         dest_neurons: list[Neuron],
         sample: list[None | np.ndarray],
-        sample_idx: int
+        sample_idx: int,
     ) -> None:
         self._cerebrum = cerebrum
         self._agent = agent
@@ -37,10 +35,10 @@ class Neuron:
         self._replay_buffer = replay_buffer
         self._src_neurons = src_neurons
         self._dest_neurons = dest_neurons
-        self._sample = sample
-        self._sample_idx = sample_idx
-        self._prev_sample_pieces = cast(list[self.SamplePiece], [])
-        self._sample_pieces = cast(list[self.SamplePiece], [])
+        self._sample = None
+        self._sample_idx = 0
+        self._sample_pieces = cast(list[Neuron.SamplePiece], [])
+        self._next_sample_pieces = cast(list[Neuron.SamplePiece], [])
         self._logger = logging.getLogger(self.__class__.__name__)
 
 
@@ -51,14 +49,15 @@ class Neuron:
 
     def collect_samples(self) -> None:
         for piece in self._sample_pieces:
-            transformer_states = self._cerebrum.environmental_buffer.transformer_states
-            transformer_other_states = np.concat([
-                transformer_states[:piece.flow_idx],
-                transformer_states[piece.flow_idx + 1:]
+            transformer_state = self._cerebrum.environmental_buffer.transformer_state
+            transformer_other_state = np.concat([
+                transformer_state[:piece.flow_idx],
+                transformer_state[piece.flow_idx + 1:]
             ])
-            piece.piece[3] = transformer_other_states
-            piece.piece[4] = self._cerebrum.environmental_buffer.transformer_rewards
-            piece.piece[5] = self._cerebrum.environmental_buffer.transformer_next_states
+            piece.piece[3] = transformer_other_state
+            piece.piece[4] = self._cerebrum.environmental_buffer.transformer_action
+            piece.piece[5] = self._cerebrum.environmental_buffer.transformer_reward
+            piece.piece[6] = self._cerebrum.environmental_buffer.transformer_next_state
 
             self._sample[self._sample_idx] = piece.piece
             self._sample_idx += 1
@@ -66,9 +65,6 @@ class Neuron:
             if self._sample_idx == len(self._sample):
                 self._replay_buffer.push(self._sample)
                 self._sample_idx = 0
-
-        self._sample_pieces = self._prev_sample_pieces
-        self._prev_sample_pieces = []
 
 
     def train(self) -> None:
@@ -81,14 +77,13 @@ class Neuron:
                 dest_agents,
                 self._cerebrum.environmental_buffer.target_actor,
                 self._cerebrum.environmental_buffer.target_critic,
-                *sample
+                *sample,
             )
             loss.backward()
             opt.step()
             opt.zero_grad(set_to_none=True)
 
         self._agent.unload_dirty(agent, opt)
-
 
     def process_message(self, flow_idx: int, input_msg: Tensor) -> None:
         agent = self._agent.load_frozen()
@@ -97,13 +92,14 @@ class Neuron:
             self._hidden_state,
             input_msg,
             self._cerebrum.epsilon,
-            self._cerebrum.gaussian_noise_var
+            self._cerebrum.gaussian_noise_var,
         )
 
-        self._prev_sample_pieces.append(self.SamplePiece(flow_idx, [
+        self._next_sample_pieces.append(self.SamplePiece(flow_idx, [
             self._hidden_state.numpy().copy(),
             input_msg.numpy().copy(),
             np.stack([self._dest_neurons[i]._hidden_state.numpy().copy() for i in range(2)]),
+            None,
             None,
             None,
             None,

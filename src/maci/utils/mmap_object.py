@@ -6,7 +6,7 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-class MMapObject:
+class MMapObject[T]:
     def __init__(self, filename: str, obj: T, resize_factor: float=1.5) -> None:
         file_path = Path(filename)
         file_existed = file_path.exists()
@@ -15,7 +15,7 @@ class MMapObject:
         if not file_existed:
             self._file.truncate(8)
 
-        self._mmap = mmap(self._file.fileno(), 0)
+        self._mmap = mmap(self._file.fileno(), length=0)
         self._resize_factor = resize_factor
         if not file_existed:
             self.save(obj)
@@ -29,7 +29,7 @@ class MMapObject:
 
     def save(self, obj: T) -> None:
         data = pickle.dumps(obj)
-        self._mmap[:8] = len(data).to_bytes(8)
+        self._mmap[:8] = len(data).to_bytes(length=8)
         end = 8 + len(data)
 
         if self._mmap.size() < end:

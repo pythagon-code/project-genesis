@@ -16,7 +16,7 @@ class Critic(Transformer):
 
 
     @override
-    def forward(self, states: Tensor, actions: Tensor | None=None) -> Tensor:
+    def forward(self, states: Tensor, actions: None | Tensor=None) -> Tensor:
         assert actions is not None
         actions = actions.unsqueeze(dim=0).expand(states.shape[0], -1, -1)
         x = torch.cat([states, actions], dim=-1)
